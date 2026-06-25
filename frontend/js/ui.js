@@ -870,6 +870,7 @@ function calcAge(birthday) {
 async function loadSettings() {
   try {
     const settings = await getSettings();
+    document.getElementById('inputUsername').value = settings.username || '';
     document.getElementById('inputGender').value = settings.gender || 'male';
     document.getElementById('inputApiKey').value = settings.api_key || '';
     document.getElementById('inputBirthday').value = settings.birthday || '';
@@ -882,6 +883,7 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
+  const username = document.getElementById('inputUsername').value.trim();
   const gender = document.getElementById('inputGender').value;
   const birthday = document.getElementById('inputBirthday').value;
   const heightCm = parseInt(document.getElementById('inputHeight').value) || null;
@@ -894,7 +896,7 @@ async function saveSettings() {
   }
 
   try {
-    const data = { gender, api_key: apiKey };
+    const data = { username, gender, api_key: apiKey };
     if (birthday) data.birthday = birthday;
     if (heightCm) data.height_cm = heightCm;
     await updateSettings(data);
@@ -902,6 +904,7 @@ async function saveSettings() {
     if (typeof _userHeight !== 'undefined') _userHeight = heightCm || _userHeight;
     if (typeof _userBirthday !== 'undefined' && birthday) _userBirthday = birthday;
     if (typeof _userGender !== 'undefined') _userGender = gender;
+    if (typeof updateHeaderUser === 'function' && username) updateHeaderUser();
     document.getElementById('inputAge').value = calcAge(birthday) || '';
     document.getElementById('apiStatusText').textContent = '✅ 设置已保存';
     document.getElementById('apiStatusText').className = 'api-status success';

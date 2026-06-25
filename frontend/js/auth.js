@@ -83,13 +83,32 @@ async function handleAuth() {
 }
 
 // 更新 header 显示当前用户
-function updateHeaderUser() {
+async function updateHeaderUser() {
   const el = document.getElementById('headerUser');
   if (!el) return;
+
+  // 优先从服务器获取最新的 username
+  let displayName = '';
   const user = getUser();
-  if (user && user.email) {
-    el.textContent = user.email;
-    el.title = '当前登录：' + user.email;
+  try {
+    const settings = await getSettings();
+    if (settings.username) {
+      displayName = settings.username;
+      // 同步到本地缓存
+      if (user) { user.username = settings.username; localStorage.setItem('health_user', JSON.stringify(user)); }
+    }
+  } catch (e) { /* ignore */ }
+
+  if (!displayName && user && user.username) {
+    displayName = user.username;
+  }
+  if (!displayName && user && user.email) {
+    displayName = user.email;
+  }
+
+  if (displayName) {
+    el.textContent = displayName;
+    el.title = '当前登录：' + (user?.email || displayName);
   }
 }
 

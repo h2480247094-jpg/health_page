@@ -45,7 +45,7 @@ router.post('/register', (req, res) => {
 
     res.json({
       token,
-      user: { id: userId, email },
+      user: { id: userId, email, username: '' },
     });
   } catch (err) {
     console.error('注册失败:', err);
@@ -76,7 +76,7 @@ router.post('/login', (req, res) => {
 
     res.json({
       token,
-      user: { id: user.id, email: user.email },
+      user: { id: user.id, email: user.email, username: user.username || '' },
     });
   } catch (err) {
     console.error('登录失败:', err);
@@ -86,7 +86,7 @@ router.post('/login', (req, res) => {
 
 // 获取当前用户信息
 router.get('/me', authMiddleware, (req, res) => {
-  const user = db.prepare('SELECT id, email, gender, birthday, height_cm, created_at FROM users WHERE id = ?').get(req.userId);
+  const user = db.prepare('SELECT id, email, username, gender, birthday, height_cm, created_at FROM users WHERE id = ?').get(req.userId);
   if (!user) {
     return res.status(404).json({ error: '用户不存在' });
   }

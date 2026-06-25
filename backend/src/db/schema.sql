@@ -2,6 +2,7 @@
 CREATE TABLE IF NOT EXISTS users (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     email           TEXT NOT NULL UNIQUE,
+    username        TEXT DEFAULT '',
     password_hash   TEXT NOT NULL,
     api_key         TEXT DEFAULT '',
     gender          TEXT DEFAULT 'male' CHECK(gender IN ('male','female')),

@@ -9,7 +9,7 @@ router.use(authMiddleware);
 router.get('/', (req, res) => {
   try {
     const user = db.prepare(
-      'SELECT gender, birthday, height_cm, api_key FROM users WHERE id = ?'
+      'SELECT username, gender, birthday, height_cm, api_key FROM users WHERE id = ?'
     ).get(req.userId);
 
     if (!user) {
@@ -17,6 +17,7 @@ router.get('/', (req, res) => {
     }
 
     res.json({
+      username: user.username || '',
       gender: user.gender,
       birthday: user.birthday,
       height_cm: user.height_cm,
@@ -31,11 +32,15 @@ router.get('/', (req, res) => {
 // 更新用户设置
 router.put('/', (req, res) => {
   try {
-    const { gender, birthday, height_cm, api_key } = req.body;
+    const { username, gender, birthday, height_cm, api_key } = req.body;
 
     const updates = [];
     const params = [];
 
+    if (username !== undefined) {
+      updates.push('username = ?');
+      params.push(username);
+    }
     if (gender !== undefined) {
       if (!['male', 'female'].includes(gender)) {
         return res.status(400).json({ error: '性别值无效' });
@@ -72,7 +77,7 @@ router.put('/', (req, res) => {
     ).run(...params);
 
     const user = db.prepare(
-      'SELECT gender, birthday, height_cm, api_key FROM users WHERE id = ?'
+      'SELECT username, gender, birthday, height_cm, api_key FROM users WHERE id = ?'
     ).get(req.userId);
 
     res.json(user);

@@ -188,6 +188,7 @@ async function clearChatHistory(type) {
 let _userHeight = 172;
 let _userBirthday = '2003-01-31';
 let _userGender = 'male';
+let _username = '';
 let _settingsLoaded = false;
 
 async function loadUserSettings() {
@@ -196,6 +197,7 @@ async function loadUserSettings() {
     if (s.height_cm) _userHeight = s.height_cm;
     if (s.birthday) _userBirthday = s.birthday;
     if (s.gender) _userGender = s.gender;
+    if (s.username) _username = s.username;
     _settingsLoaded = true;
   } catch (err) {
     console.warn('加载用户设置失败，使用默认值:', err.message);
