@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     email           TEXT NOT NULL UNIQUE,
     password_hash   TEXT NOT NULL,
+    api_key         TEXT DEFAULT '',
     gender          TEXT DEFAULT 'male' CHECK(gender IN ('male','female')),
     birthday        TEXT DEFAULT '2003-01-31',
     height_cm       INTEGER DEFAULT 172,

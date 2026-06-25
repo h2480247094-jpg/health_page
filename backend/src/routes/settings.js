@@ -9,7 +9,7 @@ router.use(authMiddleware);
 router.get('/', (req, res) => {
   try {
     const user = db.prepare(
-      'SELECT gender, birthday, height_cm FROM users WHERE id = ?'
+      'SELECT gender, birthday, height_cm, api_key FROM users WHERE id = ?'
     ).get(req.userId);
 
     if (!user) {
@@ -20,6 +20,7 @@ router.get('/', (req, res) => {
       gender: user.gender,
       birthday: user.birthday,
       height_cm: user.height_cm,
+      api_key: user.api_key || '',
     });
   } catch (err) {
     console.error('获取设置失败:', err);
@@ -30,7 +31,7 @@ router.get('/', (req, res) => {
 // 更新用户设置
 router.put('/', (req, res) => {
   try {
-    const { gender, birthday, height_cm } = req.body;
+    const { gender, birthday, height_cm, api_key } = req.body;
 
     const updates = [];
     const params = [];
@@ -54,6 +55,10 @@ router.put('/', (req, res) => {
       updates.push('height_cm = ?');
       params.push(h);
     }
+    if (api_key !== undefined) {
+      updates.push('api_key = ?');
+      params.push(api_key);
+    }
 
     if (updates.length === 0) {
       return res.status(400).json({ error: '没有要更新的字段' });
@@ -67,7 +72,7 @@ router.put('/', (req, res) => {
     ).run(...params);
 
     const user = db.prepare(
-      'SELECT gender, birthday, height_cm FROM users WHERE id = ?'
+      'SELECT gender, birthday, height_cm, api_key FROM users WHERE id = ?'
     ).get(req.userId);
 
     res.json(user);

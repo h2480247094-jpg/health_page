@@ -5,8 +5,10 @@ const TIMEOUT_MS = 30000;
 
 /**
  * 调用 DeepSeek Chat API
+ * @param {string} userApiKey - 用户自己的 Key（可选，为空则用服务器 Key）
  */
-async function callChatApi({ messages, temperature = 0.7, max_tokens = 2000 }) {
+async function callChatApi({ messages, temperature = 0.7, max_tokens = 2000, userApiKey = '' }) {
+  const apiKey = userApiKey || config.deepseek.apiKey;
   const body = {
     model: config.deepseek.model,
     messages,
@@ -23,7 +25,7 @@ async function callChatApi({ messages, temperature = 0.7, max_tokens = 2000 }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.deepseek.apiKey}`,
+          'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify(body),
         signal: controller.signal,
@@ -158,7 +160,7 @@ function localFoodEstimate(foodDescription) {
 /**
  * 调用 AI 估算食物营养
  */
-async function estimateFoodNutrition(foodDescription) {
+async function estimateFoodNutrition(foodDescription, userApiKey = '') {
   // 先尝试本地数据库
   const local = localFoodEstimate(foodDescription);
   if (local) return local;
@@ -171,6 +173,7 @@ async function estimateFoodNutrition(foodDescription) {
     ],
     temperature: 0.3,
     max_tokens: 500,
+    userApiKey,
   });
 
   try {

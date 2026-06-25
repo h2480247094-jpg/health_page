@@ -19,7 +19,11 @@
 <body>
   <header class="header">
     <h1 class="header-title">🏥 个人健康管理</h1>
-    <button class="btn-icon" id="btnSettings" title="设置 API Key">⚙️</button>
+    <div class="header-right">
+      <span class="header-user" id="headerUser" title="当前登录账号"></span>
+      <button class="btn-icon" id="btnLogout" title="退出登录 / 切换账号">🚪</button>
+      <button class="btn-icon" id="btnSettings" title="设置">⚙️</button>
+    </div>
   </header>
 
   <!-- 数据看板 -->
@@ -493,7 +497,6 @@
         <button class="btn-icon modal-close" id="btnCloseModal">✕</button>
       </div>
       <div class="modal-body">
-        <p class="modal-hint">AI 功能由服务器统一提供，无需配置 API Key。</p>
         <div class="form-row-settings">
           <div class="form-group">
             <label for="inputGender">性别</label>
@@ -503,13 +506,29 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="inputAge">年龄</label>
-            <input type="number" id="inputAge" min="10" max="120" placeholder="30" class="full-width" readonly>
+            <label for="inputBirthday">生日</label>
+            <input type="date" id="inputBirthday" class="full-width">
           </div>
         </div>
+        <div class="form-row-settings">
+          <div class="form-group">
+            <label for="inputHeight">身高 (cm)</label>
+            <input type="number" id="inputHeight" min="50" max="300" placeholder="172" class="full-width">
+          </div>
+          <div class="form-group">
+            <label for="inputAge">年龄</label>
+            <input type="number" id="inputAge" min="10" max="120" placeholder="30" class="full-width" disabled>
+          </div>
+        </div>
+        <p class="modal-hint">年龄根据生日自动计算；填写身高用于 BMI / 基础代谢计算。</p>
+        <div class="form-group">
+          <label for="inputApiKey">DeepSeek API Key（可选）</label>
+          <input type="password" id="inputApiKey" placeholder="sk-xxxxxxxxxxxxxxxx" class="full-width">
+        </div>
+        <p class="modal-hint-sub">不填则使用服务器公用 Key。</p>
         <button class="btn btn-primary full-width" id="btnSaveApiKey">保存设置</button>
         <p class="api-status" id="apiStatusText"></p>
-        <button class="btn btn-sm full-width" style="margin-top:10px;background:#e74c3c;color:white;border:none;border-radius:8px;padding:10px;cursor:pointer;" onclick="logout()">退出登录</button>
+        <button class="btn btn-sm full-width" style="margin-top:10px;background:#e74c3c;color:white;border:none;border-radius:8px;padding:10px;cursor:pointer;" onclick="logout()">退出登录 / 切换账号</button>
       </div>
     </div>
   </div>

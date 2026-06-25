@@ -857,21 +857,25 @@ async function updateChatHistoryStatus() {
 }
 
 // ===== Settings Modal =====
+function calcAge(birthday) {
+  if (!birthday) return '';
+  const today = new Date();
+  const birth = new Date(birthday);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
 async function loadSettings() {
   try {
     const settings = await getSettings();
     document.getElementById('inputGender').value = settings.gender || 'male';
-    const ageInput = document.getElementById('inputAge');
-    if (settings.birthday) {
-      const today = new Date();
-      const birth = new Date(settings.birthday);
-      let age = today.getFullYear() - birth.getFullYear();
-      const m = today.getMonth() - birth.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-      ageInput.value = age;
-    }
-    ageInput.readOnly = true;
-    ageInput.title = '年龄根据生日自动计算';
+    document.getElementById('inputApiKey').value = settings.api_key || '';
+    document.getElementById('inputBirthday').value = settings.birthday || '';
+    document.getElementById('inputHeight').value = settings.height_cm || '';
+    const age = calcAge(settings.birthday);
+    document.getElementById('inputAge').value = age || '';
   } catch (err) {
     console.error('加载设置失败:', err);
   }
@@ -879,14 +883,32 @@ async function loadSettings() {
 
 async function saveSettings() {
   const gender = document.getElementById('inputGender').value;
+  const birthday = document.getElementById('inputBirthday').value;
+  const heightCm = parseInt(document.getElementById('inputHeight').value) || null;
+  const apiKey = document.getElementById('inputApiKey').value.trim();
+
+  if (heightCm && (heightCm < 50 || heightCm > 300)) {
+    document.getElementById('apiStatusText').textContent = '身高应在 50-300cm 之间';
+    document.getElementById('apiStatusText').className = 'api-status error';
+    return;
+  }
 
   try {
-    await updateSettings({ gender });
+    const data = { gender, api_key: apiKey };
+    if (birthday) data.birthday = birthday;
+    if (heightCm) data.height_cm = heightCm;
+    await updateSettings(data);
+    // 同步更新本地缓存
+    if (typeof _userHeight !== 'undefined') _userHeight = heightCm || _userHeight;
+    if (typeof _userBirthday !== 'undefined' && birthday) _userBirthday = birthday;
+    if (typeof _userGender !== 'undefined') _userGender = gender;
+    document.getElementById('inputAge').value = calcAge(birthday) || '';
     document.getElementById('apiStatusText').textContent = '✅ 设置已保存';
     document.getElementById('apiStatusText').className = 'api-status success';
   } catch (err) {
     document.getElementById('apiStatusText').textContent = '❌ 保存失败：' + err.message;
     document.getElementById('apiStatusText').className = 'api-status error';
+    return;
   }
 
   hideModal('modalSettings');

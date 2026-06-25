@@ -63,6 +63,11 @@ const app = {
       return;
     }
 
+    // 显示当前登录用户
+    if (typeof updateHeaderUser === 'function') {
+      updateHeaderUser();
+    }
+
     // 加载用户设置（身高、生日、性别用于 BMI/BMR 计算）
     if (typeof loadUserSettings === 'function') {
       await loadUserSettings();
@@ -454,11 +459,30 @@ const app = {
 
     // Settings modal
     document.getElementById('btnSettings').addEventListener('click', async () => {
-      await loadSettings();
+      showModal('modalSettings');
       document.getElementById('apiStatusText').textContent = '';
       document.getElementById('apiStatusText').className = 'api-status';
-      showModal('modalSettings');
+      try {
+        await loadSettings();
+      } catch (e) {
+        console.error('加载设置失败:', e);
+      }
     });
+
+    // Auto-calc age when birthday changes
+    const birthdayInput = document.getElementById('inputBirthday');
+    if (birthdayInput) {
+      birthdayInput.addEventListener('change', () => {
+        const age = typeof calcAge === 'function' ? calcAge(birthdayInput.value) : '';
+        document.getElementById('inputAge').value = age || '';
+      });
+    }
+
+    // Logout button
+    const btnLogout = document.getElementById('btnLogout');
+    if (btnLogout) {
+      btnLogout.addEventListener('click', logout);
+    }
 
     document.getElementById('btnCloseModal').addEventListener('click', () => hideModal('modalSettings'));
 

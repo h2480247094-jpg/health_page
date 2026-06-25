@@ -14,7 +14,8 @@ router.post('/health-advice', async (req, res) => {
     const { question } = req.body;
 
     // 获取用户信息
-    const user = db.prepare('SELECT gender, birthday, height_cm FROM users WHERE id = ?').get(req.userId);
+    const user = db.prepare('SELECT gender, birthday, height_cm, api_key FROM users WHERE id = ?').get(req.userId);
+    const userApiKey = (user.api_key || '').trim();
 
     // 获取健康数据
     const records = db.prepare(
@@ -38,7 +39,7 @@ router.post('/health-advice', async (req, res) => {
 
     messages.push({ role: 'user', content: question || '请根据我的健康数据给出今天的建议' });
 
-    const answer = await callChatApi({ messages, max_tokens: 2000 });
+    const answer = await callChatApi({ messages, max_tokens: 2000, userApiKey });
 
     // 保存对话历史
     db.prepare(
@@ -72,7 +73,9 @@ router.post('/food-estimate', async (req, res) => {
       return res.status(400).json({ error: '请输入食物描述' });
     }
 
-    const result = await estimateFoodNutrition(foodDescription);
+    const user = db.prepare('SELECT api_key FROM users WHERE id = ?').get(req.userId);
+    const userApiKey = (user.api_key || '').trim();
+    const result = await estimateFoodNutrition(foodDescription, userApiKey);
     if (!result) {
       return res.status(500).json({ error: '估算失败，请重新描述' });
     }
@@ -89,7 +92,8 @@ router.post('/skincare-advice', async (req, res) => {
   try {
     const { question } = req.body;
 
-    const user = db.prepare('SELECT gender, birthday FROM users WHERE id = ?').get(req.userId);
+    const user = db.prepare('SELECT gender, birthday, api_key FROM users WHERE id = ?').get(req.userId);
+    const userApiKey = (user.api_key || '').trim();
     const records = db.prepare(
       'SELECT * FROM health_records WHERE user_id = ? ORDER BY date DESC LIMIT 30'
     ).all(req.userId);
@@ -108,7 +112,7 @@ router.post('/skincare-advice', async (req, res) => {
 
     messages.push({ role: 'user', content: question || '请根据我的情况给出护肤建议' });
 
-    const answer = await callChatApi({ messages, max_tokens: 2000 });
+    const answer = await callChatApi({ messages, max_tokens: 2000, userApiKey });
 
     db.prepare(
       'INSERT INTO chat_histories (user_id, chat_type, question, answer) VALUES (?, ?, ?, ?)'

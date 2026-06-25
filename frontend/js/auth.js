@@ -1,6 +1,6 @@
 // ====== 认证模块 ======
 
-const API_BASE = window.location.origin + '/api';
+var API_BASE = window.location.origin + '/api';
 let isRegisterMode = false;
 
 // 存储 token 和用户信息
@@ -82,8 +82,20 @@ async function handleAuth() {
   }
 }
 
+// 更新 header 显示当前用户
+function updateHeaderUser() {
+  const el = document.getElementById('headerUser');
+  if (!el) return;
+  const user = getUser();
+  if (user && user.email) {
+    el.textContent = user.email;
+    el.title = '当前登录：' + user.email;
+  }
+}
+
 // 退出登录
 function logout() {
+  if (!confirm('确定要退出登录吗？')) return;
   clearAuth();
   window.location.href = '/login.html';
 }

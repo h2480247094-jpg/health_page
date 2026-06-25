@@ -1,7 +1,6 @@
 // ====== API 客户端 ======
 // 代替 db.js — 所有数据请求通过 fetch 发往后端
-
-const API_BASE = window.location.origin + '/api';
+// API_BASE 由 auth.js 声明，此处直接使用
 
 function getToken() {
   return localStorage.getItem('health_token');
