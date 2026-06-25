@@ -185,8 +185,8 @@ async function clearChatHistory(type) {
 
 // ====== 计算工具函数（原在 api.js 中） ======
 
-let _userHeight = 172;
-let _userBirthday = '2003-01-31';
+let _userHeight = 175;
+let _userBirthday = '2000-01-01';
 let _userGender = 'male';
 let _username = '';
 let _settingsLoaded = false;

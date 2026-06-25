@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash   TEXT NOT NULL,
     api_key         TEXT DEFAULT '',
     gender          TEXT DEFAULT 'male' CHECK(gender IN ('male','female')),
-    birthday        TEXT DEFAULT '2003-01-31',
-    height_cm       INTEGER DEFAULT 172,
+    birthday        TEXT DEFAULT '2000-01-01',
+    height_cm       INTEGER DEFAULT 175,
     created_at      TEXT DEFAULT (datetime('now')),
     updated_at      TEXT DEFAULT (datetime('now'))
 );
