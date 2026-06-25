@@ -5,3 +5,4 @@ backend/node_modules/
 backend/data/
 backend/uploads/photos/
 backend/.env
+backend/.env.production
