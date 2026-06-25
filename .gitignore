@@ -1,3 +1,7 @@
 .claude/
 .DS_Store
 Thumbs.db
+backend/node_modules/
+backend/data/
+backend/uploads/photos/
+backend/.env

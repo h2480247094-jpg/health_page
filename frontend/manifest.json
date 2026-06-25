@@ -1,0 +1,20 @@
+{
+  "name": "个人健康管理",
+  "short_name": "健康管理",
+  "description": "健康数据追踪与管理助手",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#27ae60",
+  "theme_color": "#2ecc71",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "fitness", "lifestyle"],
+  "lang": "zh-CN"
+}
