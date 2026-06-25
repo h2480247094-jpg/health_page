@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>个人健康管理</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2ecc71">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="健康管理">
+  <link rel="apple-touch-icon" href="icon.svg">
+
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="header">
+    <h1 class="header-title">🏥 个人健康管理</h1>
+    <button class="btn-icon" id="btnSettings" title="设置 API Key">⚙️</button>
+  </header>
+
+  <!-- 数据看板 -->
+  <section class="dashboard">
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="stat-label">今日体重</div>
+        <div class="stat-value" id="statWeight">-- kg</div>
+        <div class="stat-sub" id="statWeightChange"></div>
+        <div class="stat-bmi" id="statBMI"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">热量缺口</div>
+        <div class="stat-value" id="statDeficit">-- kcal</div>
+        <div class="stat-sub">消耗 - 摄入（估算）</div>
+        <div style="font-size:0.7em;opacity:0.5;margin-top:2px;">活动系数1.1</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">睡眠时长</div>
+        <div class="stat-value" id="statSleep">--</div>
+        <div class="stat-sub" id="statSleepSub"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">今日消耗</div>
+        <div class="stat-value" id="statCalories">-- kcal</div>
+        <div class="stat-sub">运动热量消耗</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 标签页切换 -->
+  <nav class="tabs">
+    <button class="tab active" data-tab="tabAdd">📝 录入数据</button>
+    <button class="tab" data-tab="tabHistory">📋 历史记录</button>
+    <button class="tab" data-tab="tabMicronutrients">🔬 微量营养素</button>
+    <button class="tab" data-tab="tabAI">🤖 AI 建议</button>
+    <button class="tab" data-tab="tabSkincare">🧴 护肤管理</button>
+  </nav>
+
+  <!-- 快速录入 -->
+  <section class="tab-content active" id="tabAdd">
+    <div class="quick-entry-grid">
+      <!-- 体重卡片 -->
+      <div class="quick-card" id="cardWeight">
+        <div class="quick-card-icon">⚖️</div>
+        <div class="quick-card-title">体重记录</div>
+        <div class="quick-card-body">
+          <input type="date" class="qe-date" id="qeWeightDate">
+          <input type="number" class="qe-input" id="qeWeight" step="0.01" min="30" max="300" placeholder="体重 kg，如 70.00">
+          <button class="btn btn-primary qe-btn" id="btnSaveWeight">保存体重</button>
+        </div>
+        <div class="qe-feedback" id="fbWeight"></div>
+      </div>
+
+      <!-- 睡眠卡片 -->
+      <div class="quick-card" id="cardSleep">
+        <div class="quick-card-icon">😴</div>
+        <div class="quick-card-title">睡眠记录（支持多段）</div>
+        <div class="quick-card-body">
+          <input type="date" class="qe-date" id="qeSleepDate">
+          <div class="sleep-segments" id="sleepSegments">
+            <div class="sleep-segment" data-seg="0">
+              <div class="seg-header">
+                <span class="seg-label">第1段</span>
+                <button class="btn-sm btn-remove-seg" data-seg="0" title="删除此段">✕</button>
+              </div>
+              <div class="qe-row">
+                <input type="time" class="qe-input seg-bed" placeholder="入睡时间" title="入睡时间">
+                <span class="seg-arrow">→</span>
+                <input type="time" class="qe-input seg-wake" placeholder="醒来时间" title="醒来时间">
+              </div>
+              <div class="seg-duration">--</div>
+            </div>
+          </div>
+          <button class="btn-sm btn-add-seg" id="btnAddSegment">+ 添加分段</button>
+          <div class="sleep-total" id="sleepTotal">总计：--</div>
+          <button class="btn btn-primary qe-btn" id="btnSaveSleep">保存睡眠</button>
+        </div>
+        <div class="qe-feedback" id="fbSleep"></div>
+      </div>
+
+      <!-- 饮食卡片 -->
+      <div class="quick-card" id="cardDiet">
+        <div class="quick-card-icon">🍽️</div>
+        <div class="quick-card-title">饮食记录</div>
+        <div class="quick-card-body">
+          <input type="date" class="qe-date" id="qeDietDate">
+          <select class="qe-select" id="qeMealType">
+            <option value="breakfast">🌅 早餐</option>
+            <option value="lunch">☀️ 午餐</option>
+            <option value="dinner">🌙 晚餐</option>
+            <option value="snack">🍪 加餐</option>
+          </select>
+          <input type="text" class="qe-input" id="qeDietDesc" placeholder="吃了什么？如：一碗牛肉面">
+          <div class="qe-row qe-nutrition-row">
+            <span class="qe-field"><input type="number" class="qe-input qe-narrow" id="qeDietCal" step="1" min="0" placeholder="热量 kcal"><span class="qe-field-label">热量 kcal</span></span>
+            <span class="qe-field"><input type="number" class="qe-input qe-narrow" id="qeDietProtein" step="0.1" min="0" placeholder="蛋白质 g"><span class="qe-field-label">蛋白质 g</span></span>
+            <span class="qe-field"><input type="number" class="qe-input qe-narrow" id="qeDietCarbs" step="0.1" min="0" placeholder="碳水 g"><span class="qe-field-label">碳水 g</span></span>
+            <span class="qe-field"><input type="number" class="qe-input qe-narrow" id="qeDietFat" step="0.1" min="0" placeholder="脂肪 g"><span class="qe-field-label">脂肪 g</span></span>
+            <button class="btn-sm btn-ai-estimate" id="btnAiEstimate" title="AI 估算营养成分">🤖 估算</button>
+          </div>
+          <button class="btn btn-primary qe-btn" id="btnSaveDiet">记录这一餐</button>
+        </div>
+        <div class="qe-feedback" id="fbDiet"></div>
+      </div>
+
+      <!-- 运动卡片 -->
+      <div class="quick-card" id="cardExercise">
+        <div class="quick-card-icon">🏃</div>
+        <div class="quick-card-title">运动记录</div>
+        <div class="quick-card-body">
+          <input type="date" class="qe-date" id="qeExDate">
+          <input type="text" class="qe-input" id="qeExType" placeholder="运动类型，如：跑步">
+          <input type="number" class="qe-input" id="qeExDuration" step="1" min="1" placeholder="时长（分钟），如 30">
+          <input type="number" class="qe-input" id="qeExCal" step="1" min="0" placeholder="消耗热量 kcal，如 250">
+          <button class="btn btn-primary qe-btn" id="btnSaveExercise">保存运动</button>
+        </div>
+        <div class="qe-feedback" id="fbExercise"></div>
+      </div>
+
+      <!-- 补剂卡片 -->
+      <div class="quick-card" id="cardSupplement">
+        <div class="quick-card-icon">💊</div>
+        <div class="quick-card-title">补剂记录</div>
+        <div class="quick-card-body">
+          <input type="date" class="qe-date" id="qeSuppDate">
+          <div class="supp-presets" id="suppPresets">
+            <!-- dynamically rendered from localStorage -->
+          </div>
+          <div class="supp-preset-manage" id="suppPresetManage" style="display:none">
+            <div class="supp-preset-manage-header">
+              <span>管理补剂预设</span>
+              <button class="btn-sm" id="btnClosePresetManage">完成</button>
+            </div>
+            <div class="supp-preset-manage-list" id="suppPresetManageList"></div>
+            <div class="supp-preset-add-row">
+              <input type="text" class="qe-input" id="qeNewPresetName" placeholder="名称，如：辅酶Q10">
+              <input type="number" class="qe-input" id="qeNewPresetDosage" placeholder="剂量" value="1" step="0.1" min="0.1">
+              <select class="qe-select" id="qeNewPresetUnit">
+                <option value="粒">粒</option>
+                <option value="g">g</option>
+                <option value="mg">mg</option>
+                <option value="ml">ml</option>
+                <option value="勺">勺</option>
+                <option value="片">片</option>
+                <option value="杯">杯</option>
+              </select>
+              <button class="btn btn-primary" id="btnAddPreset">添加</button>
+            </div>
+          </div>
+          <button class="btn-sm btn-manage-presets" id="btnManagePresets">⚙️ 管理预设</button>
+          <div class="supp-dosage-row">
+            <input type="text" class="qe-input supp-name-input" id="qeSuppName" placeholder="补剂名称，如：鱼油">
+            <input type="number" class="qe-input supp-dosage-input" id="qeSuppDosage" step="0.1" min="0.1" placeholder="剂量" value="1">
+            <select class="qe-select supp-unit-select" id="qeSuppUnit">
+              <option value="粒">粒</option>
+              <option value="g">g</option>
+              <option value="mg">mg</option>
+              <option value="ml">ml</option>
+              <option value="勺">勺</option>
+              <option value="片">片</option>
+              <option value="杯">杯</option>
+            </select>
+          </div>
+          <input type="text" class="qe-input" id="qeSuppNote" placeholder="备注（选填）">
+          <button class="btn btn-primary qe-btn" id="btnSaveSupplement">记录补剂</button>
+        </div>
+        <div class="qe-feedback" id="fbSupplement"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 历史记录 -->
+  <section class="tab-content" id="tabHistory">
+    <div class="history-controls">
+      <input type="text" id="searchInput" placeholder="搜索日期或食物..." class="search-input">
+      <select id="sortOrder" class="sort-select">
+        <option value="desc">最新在前</option>
+        <option value="asc">最早在前</option>
+      </select>
+    </div>
+    
+    <div class="records-list" id="recordsList">
+      <p class="empty-hint">暂无记录，快去录入数据吧！</p>
+    </div>
+  </section>
+
+  <!-- AI 建议 -->
+  <section class="tab-content" id="tabAI">
+      <div class="ai-panel">
+        <div class="ai-status" id="aiStatus">
+        <span id="aiStatusText">🔒 先配置健康管理 API Key</span>
+        </div>
+        <div class="ai-input-row">
+        <input type="text" id="aiQuestion" placeholder="先配置 API Key 后就能问我，比如：我最近状态怎么样？" class="ai-question-input" disabled>
+        <button class="btn btn-primary" id="btnAskAI" disabled>获取建议</button>
+        </div>
+      <div class="ai-history-row">
+        <button class="btn-sm btn-clear-history" id="btnClearHistory">🗑️ 清除对话历史</button>
+      </div>
+      <div class="ai-response" id="aiResponse" style="display:none">
+        <div class="ai-response-header">💬 你的健康伙伴说</div>
+        <div class="ai-response-content" id="aiResponseContent"></div>
+      </div>
+      <div class="ai-loading" id="aiLoading" style="display:none">
+        <div class="spinner"></div>
+        <span>正在仔细看你的数据，稍等一下哦...</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 微量营养素 -->
+  <section class="tab-content" id="tabMicronutrients">
+    <!-- 达标概览 -->
+    <div class="micro-summary" id="microSummary">
+      <div class="micro-summary-card">
+        <div class="micro-summary-line" id="microSummaryText">--</div>
+      </div>
+    </div>
+
+    <!-- 营养素详情卡片列表 -->
+    <div class="micro-grid" id="microGrid"></div>
+  </section>
+
+  <!-- 护肤管理 -->
+  <section class="tab-content" id="tabSkincare">
+    <!-- 护肤主面板 -->
+    <div class="skin-panel" id="skinPanel" style="display:none">
+      <!-- 护肤 AI 面板 -->
+      <div class="skin-section" id="skinAiSection">
+        <div class="skin-section-header">
+          <h3>🤖 护肤 AI 顾问</h3>
+        </div>
+        <div class="ai-panel">
+          <div class="ai-status configured" id="skinAiStatus">
+            <span id="skinAiStatusText">🔒 先配置护肤 API Key</span>
+          </div>
+          <div class="ai-input-row">
+            <input type="text" id="skinAiQuestion" placeholder="先配置 API Key 后就能问我，比如：最近脸上容易出油吗？" class="ai-question-input" disabled>
+            <button class="btn btn-primary" id="btnAskSkinAI" disabled>获取建议</button>
+          </div>
+          <div class="ai-history-row">
+            <button class="btn-sm btn-clear-history" id="btnClearSkinHistory">🗑️ 清除对话历史</button>
+          </div>
+          <div class="ai-response" id="skinAiResponse" style="display:none">
+            <div class="ai-response-header">🧴 你的护肤顾问说</div>
+            <div class="ai-response-content" id="skinAiResponseContent"></div>
+          </div>
+          <div class="ai-loading" id="skinAiLoading" style="display:none">
+            <div class="spinner"></div>
+            <span>正在分析你的生活习惯和皮肤状况...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PIN 解锁面板 -->
+      <div class="skin-pin-lock" id="skinPinLock">
+        <div class="skin-pin-card">
+          <div class="skin-pin-icon">🔒</div>
+          <h3 class="skin-pin-title" id="skinPinTitle">请输入 4 位数字密码查看护肤照片</h3>
+          <p class="skin-pin-hint" id="skinPinHint">密码只保护照片区，AI 建议不用解锁</p>
+          <div class="skin-pin-inputs" id="skinPinInputs">
+            <input type="password" class="skin-pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="0">
+            <input type="password" class="skin-pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="1">
+            <input type="password" class="skin-pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="2">
+            <input type="password" class="skin-pin-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="3">
+          </div>
+          <p class="skin-pin-error" id="skinPinError" style="display:none"></p>
+          <button class="btn btn-primary skin-pin-btn" id="btnSkinUnlock">解锁</button>
+          <button class="btn-sm skin-pin-reset" id="btnSkinResetPin" style="display:none">重置密码（数据不会丢失）</button>
+        </div>
+      </div>
+
+      <!-- 照片上传区 -->
+      <div class="skin-section" id="skinPhotoSection">
+        <div class="skin-section-header">
+          <h3>📸 肤质记录</h3>
+          <span class="skin-section-hint">定期拍下自拍，追踪皮肤变化</span>
+        </div>
+        <div class="photo-upload-area">
+          <div class="photo-upload-triple">
+            <!-- 左脸 -->
+            <div class="photo-upload-item">
+              <div class="photo-upload-label">👈 左脸</div>
+              <input type="file" class="skin-photo-input" id="skinPhotoInputLeft" accept="image/*" style="display:none" data-type="left">
+              <button class="btn btn-select-photo" data-target="skinPhotoInputLeft">选择照片</button>
+              <span class="photo-file-name" id="photoFileNameLeft">未选择</span>
+            </div>
+            <!-- 正脸 -->
+            <div class="photo-upload-item">
+              <div class="photo-upload-label">🧑 正脸</div>
+              <input type="file" class="skin-photo-input" id="skinPhotoInputFront" accept="image/*" style="display:none" data-type="front">
+              <button class="btn btn-select-photo" data-target="skinPhotoInputFront">选择照片</button>
+              <span class="photo-file-name" id="photoFileNameFront">未选择</span>
+            </div>
+            <!-- 右脸 -->
+            <div class="photo-upload-item">
+              <div class="photo-upload-label">👉 右脸</div>
+              <input type="file" class="skin-photo-input" id="skinPhotoInputRight" accept="image/*" style="display:none" data-type="right">
+              <button class="btn btn-select-photo" data-target="skinPhotoInputRight">选择照片</button>
+              <span class="photo-file-name" id="photoFileNameRight">未选择</span>
+            </div>
+          </div>
+          <div class="photo-upload-bottom">
+            <input type="date" class="qe-date" id="qePhotoDate">
+            <input type="text" class="qe-input" id="qePhotoNote" placeholder="备注（如：额头长痘、脸颊泛红）" maxlength="100">
+            <button class="btn btn-primary" id="btnUploadPhoto">上传全部</button>
+          </div>
+          <p class="photo-limit-hint">支持 JPG/PNG，单张不超过 10MB。每天三张：左脸、正脸、右脸。</p>
+        </div>
+      </div>
+
+      <!-- 照片画廊 -->
+      <div class="skin-section" id="skinPhotoGallerySection">
+        <div class="skin-section-header">
+          <h3>🖼️ 照片画廊</h3>
+          <button class="btn-sm btn-toggle-blur" id="btnToggleBlur">👁️ 显示全部</button>
+        </div>
+        <div class="photo-gallery" id="photoGallery">
+          <p class="empty-hint">还没有照片，拍摄第一张自拍吧！</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 饮食补充建议 -->
+  <section class="food-suggest-section" id="foodSuggestSection" style="display:none">
+    <div class="chart-header">
+      <h2>🥗 今日建议补充</h2>
+      <span class="food-suggest-hint">根据微量营养素缺口推荐</span>
+    </div>
+    <div class="food-suggest-grid" id="foodSuggestGrid"></div>
+    <div class="food-top-picks" id="foodTopPicks" style="display:none">
+      <div class="food-top-picks-header">🎯 今日综合最推荐：针对今天的缺乏，吃这几样就能补上</div>
+      <div class="food-top-picks-list" id="foodTopPicksList"></div>
+    </div>
+    <div class="deficiency-warnings" id="deficiencyWarnings" style="display:none">
+      <div class="deficiency-warnings-header">⚠️ 微量营养素缺乏警告</div>
+      <div class="deficiency-warnings-list" id="deficiencyWarningsList"></div>
+    </div>
+    <div class="health-assessment" id="healthAssessment" style="display:none">
+      <div class="health-assessment-header">🩺 综合身体评估</div>
+      <div class="health-assessment-body" id="healthAssessmentBody"></div>
+    </div>
+    <div class="food-top-picks food-recent-picks" id="foodRecentPicks" style="display:none">
+      <div class="food-top-picks-header">📅 近期综合最推荐：针对近7天持续缺乏的营养素</div>
+      <div class="food-top-picks-list" id="foodRecentPicksList"></div>
+    </div>
+  </section>
+
+  <!-- 体重曲线：录入数据和AI建议显示 -->
+  <section class="chart-section" id="weightChartSection">
+    <div class="chart-header">
+      <h2>📈 体重变化曲线</h2>
+      <div class="chart-controls">
+        <button class="btn-range active" data-days="30">30天</button>
+        <button class="btn-range" data-days="90">90天</button>
+        <button class="btn-range" data-days="180">半年</button>
+        <button class="btn-range" data-days="365">一年</button>
+            <button class="btn-icon btn-expand" data-chart="weight" title="放大查看">⛶</button>
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="weightChart"></canvas>
+    </div>
+  </section>
+
+  <!-- 其他图表：仅AI建议显示 -->
+  <div id="chartsContainer" style="display:none">
+  <!-- 热量消耗柱状图 -->
+  <section class="chart-section">
+    <div class="chart-header">
+      <h2>🔥 运动热量消耗</h2>
+      <div class="chart-controls">
+        <button class="btn-range btn-cal-range active" data-days="7">7天</button>
+        <button class="btn-range btn-cal-range" data-days="15">15天</button>
+        <button class="btn-range btn-cal-range" data-days="30">30天</button>
+      </div>
+    </div>
+    <div class="chart-pagination">
+      <button class="btn-page" id="calPrevLarge" title="向前跳7天">◀◀</button>
+      <button class="btn-page" id="calPrev" title="前一天">◀</button>
+      <span class="page-range" id="calRangeLabel">--</span>
+      <button class="btn-page" id="calNext" title="后一天" disabled>▶</button>
+      <button class="btn-page" id="calNextLarge" title="向后跳7天" disabled>▶▶</button>
+    </div>
+    <div class="chart-container">
+      <canvas id="calorieChart"></canvas>
+    </div>
+  </section>
+
+  <!-- 睡眠曲线 -->
+  <section class="chart-section">
+    <div class="sleep-charts-grid">
+      <!-- 入睡时间 -->
+      <div class="sleep-chart-card">
+        <div class="chart-header">
+          <h3>🌙 入睡时间</h3>
+          <div class="chart-controls">
+            <button class="btn-range btn-sleep-range active" data-days="7" data-chart="bed">7天</button>
+            <button class="btn-range btn-sleep-range" data-days="15" data-chart="bed">15天</button>
+            <button class="btn-range btn-sleep-range" data-days="30" data-chart="bed">30天</button>
+            <button class="btn-icon btn-expand" data-chart="bed" title="放大查看">⛶</button>
+          </div>
+        </div>
+        <div class="chart-pagination">
+          <button class="btn-page" id="bedPrevLarge" title="向前跳7天">◀◀</button>
+          <button class="btn-page" id="bedPrev" title="前一天">◀</button>
+          <span class="page-range" id="bedRangeLabel">--</span>
+          <button class="btn-page" id="bedNext" title="后一天" disabled>▶</button>
+          <button class="btn-page" id="bedNextLarge" title="向后跳7天" disabled>▶▶</button>
+        </div>
+        <div class="chart-container chart-sm">
+          <canvas id="bedTimeChart"></canvas>
+        </div>
+      </div>
+
+      <!-- 醒来时间 -->
+      <div class="sleep-chart-card">
+        <div class="chart-header">
+          <h3>☀️ 醒来时间</h3>
+          <div class="chart-controls">
+            <button class="btn-range btn-sleep-range active" data-days="7" data-chart="wake">7天</button>
+            <button class="btn-range btn-sleep-range" data-days="15" data-chart="wake">15天</button>
+            <button class="btn-range btn-sleep-range" data-days="30" data-chart="wake">30天</button>
+            <button class="btn-icon btn-expand" data-chart="wake" title="放大查看">⛶</button>
+          </div>
+        </div>
+        <div class="chart-pagination">
+          <button class="btn-page" id="wakePrevLarge" title="向前跳7天">◀◀</button>
+          <button class="btn-page" id="wakePrev" title="前一天">◀</button>
+          <span class="page-range" id="wakeRangeLabel">--</span>
+          <button class="btn-page" id="wakeNext" title="后一天" disabled>▶</button>
+          <button class="btn-page" id="wakeNextLarge" title="向后跳7天" disabled>▶▶</button>
+        </div>
+        <div class="chart-container chart-sm">
+          <canvas id="wakeTimeChart"></canvas>
+        </div>
+      </div>
+
+      <!-- 睡眠时长 -->
+      <div class="sleep-chart-card">
+        <div class="chart-header">
+          <h3>💤 睡眠时长</h3>
+          <div class="chart-controls">
+            <button class="btn-range btn-sleep-range active" data-days="7" data-chart="sleepDur">7天</button>
+            <button class="btn-range btn-sleep-range" data-days="15" data-chart="sleepDur">15天</button>
+            <button class="btn-range btn-sleep-range" data-days="30" data-chart="sleepDur">30天</button>
+          </div>
+        </div>
+        <div class="chart-pagination">
+          <button class="btn-page" id="sleepDurPrevLarge" title="向前跳7天">◀◀</button>
+          <button class="btn-page" id="sleepDurPrev" title="前一天">◀</button>
+          <span class="page-range" id="sleepDurRangeLabel">--</span>
+          <button class="btn-page" id="sleepDurNext" title="后一天" disabled>▶</button>
+          <button class="btn-page" id="sleepDurNextLarge" title="向后跳7天" disabled>▶▶</button>
+        </div>
+        <div class="chart-container chart-sm">
+          <canvas id="sleepDurChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- API Key 设置弹窗 -->
+  <div class="modal-overlay" id="modalSettings" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>API Key 设置</h3>
+        <button class="btn-icon modal-close" id="btnCloseModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-hint">请输入你的健康管理 API Key，用于获取 AI 健康建议。</p>
+        <p class="modal-hint-sub">以下身体数据仅用于计算 BMI 和基础代谢，只存本地。</p>
+        <div class="form-row-settings">
+          <div class="form-group">
+            <label for="inputGender">性别</label>
+            <select id="inputGender" class="full-width">
+              <option value="male">男</option>
+              <option value="female">女</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inputAge">年龄</label>
+            <input type="number" id="inputAge" min="10" max="120" placeholder="30" class="full-width">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputApiKey">健康管理 API Key</label>
+          <input type="password" id="inputApiKey" placeholder="sk-xxxxxxxxxxxxxxxx" class="full-width">
+        </div>
+        <div class="form-group">
+          <label for="inputApiUrl">API 端点（可选）</label>
+          <input type="text" id="inputApiUrl" placeholder="https://api.deepseek.com/v1/chat/completions" class="full-width" value="https://api.deepseek.com/v1/chat/completions">
+        </div>
+        <div class="form-group">
+          <label for="inputModel">模型名称（可选）</label>
+          <input type="text" id="inputModel" placeholder="deepseek-chat" class="full-width" value="deepseek-chat">
+        </div>
+        <div class="form-group">
+          <label for="inputCalorieApiKey">热量计算 API Key</label>
+          <input type="password" id="inputCalorieApiKey" placeholder="sk-xxxxxxxxxxxxxxxx" class="full-width">
+        </div>
+        <div class="form-group">
+          <label for="inputCalorieApiUrl">热量计算 API 端点（可选）</label>
+          <input type="text" id="inputCalorieApiUrl" placeholder="https://api.deepseek.com/v1/chat/completions" class="full-width" value="https://api.deepseek.com/v1/chat/completions">
+        </div>
+        <div class="form-group">
+          <label for="inputCalorieModel">热量计算模型名称（可选）</label>
+          <input type="text" id="inputCalorieModel" placeholder="deepseek-chat" class="full-width" value="deepseek-chat">
+        </div>
+        <div class="form-group">
+          <label for="inputSkincareApiKey">护肤 API Key</label>
+          <input type="password" id="inputSkincareApiKey" placeholder="sk-xxxxxxxxxxxxxxxx" class="full-width">
+        </div>
+        <div class="form-group">
+          <label for="inputSkincareApiUrl">护肤 API 端点</label>
+          <input type="text" id="inputSkincareApiUrl" placeholder="https://api.deepseek.com/v1/chat/completions" class="full-width" value="https://api.deepseek.com/v1/chat/completions">
+        </div>
+        <div class="form-group">
+          <label for="inputSkincareModel">护肤模型名称（可选）</label>
+          <input type="text" id="inputSkincareModel" placeholder="deepseek-chat" class="full-width" value="deepseek-chat">
+        </div>
+        <p class="modal-hint-sub">健康建议、热量估算和护肤建议现在是三套独立配置，互不影响。</p>
+        <button class="btn btn-primary full-width" id="btnSaveApiKey">保存设置</button>
+        <p class="api-status" id="apiStatusText"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 热量平衡曲线 -->
+  <section class="chart-section">
+    <div class="chart-header">
+      <h2>⚖️ 热量平衡（缺口 / 盈余）</h2>
+      <div class="chart-controls">
+        <button class="btn-range btn-bal-range active" data-days="7">7天</button>
+        <button class="btn-range btn-bal-range" data-days="15">15天</button>
+        <button class="btn-range btn-bal-range" data-days="30">30天</button>
+            <button class="btn-icon btn-expand" data-chart="calBalance" title="放大查看">⛶</button>
+      </div>
+    </div>
+    <div class="chart-pagination">
+      <button class="btn-page" id="balPrevLarge" title="向前跳7天">◀◀</button>
+      <button class="btn-page" id="balPrev" title="前一天">◀</button>
+      <span class="page-range" id="balRangeLabel">--</span>
+      <button class="btn-page" id="balNext" title="后一天" disabled>▶</button>
+      <button class="btn-page" id="balNextLarge" title="向后跳7天" disabled>▶▶</button>
+    </div>
+    <div class="chart-container">
+      <canvas id="calBalanceChart"></canvas>
+    </div>
+  </section>
+  </div><!-- /chartsContainer -->
+
+  <!-- 照片查看弹窗 -->
+  <div class="photo-viewer-overlay" id="photoViewer" style="display:none">
+    <div class="photo-viewer-modal">
+      <div class="photo-viewer-header">
+        <h3 id="photoViewerTitle">📸 照片详情</h3>
+        <button class="btn-icon photo-viewer-close" id="btnClosePhotoViewer">✕</button>
+      </div>
+      <div class="photo-viewer-body">
+        <img id="photoViewerImg" src="" alt="自拍照片">
+      </div>
+      <div class="photo-viewer-footer">
+        <span class="photo-viewer-info" id="photoViewerInfo"></span>
+        <button class="btn btn-primary" id="btnDownloadPhoto">💾 保存到本地</button>
+        <button class="btn btn-danger-sm" id="btnDeletePhotoViewer">🗑️ 删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div class="toast" id="toast" style="display:none"></div>
+
+  <!-- 图表全屏弹窗 -->
+  <div class="chart-fullscreen-overlay" id="chartFullscreen" style="display:none">
+    <div class="chart-fullscreen-modal">
+      <div class="chart-fullscreen-header">
+        <h3 id="chartFullscreenTitle"></h3>
+            <div class="chart-fullscreen-zoom">
+              <button class="btn-icon btn-zoom" id="btnZoomOut" title="缩小">−</button>
+              <button class="btn-icon btn-zoom" id="btnZoomReset" title="重置">↺</button>
+              <button class="btn-icon btn-zoom" id="btnZoomIn" title="放大">+</button>
+            </div>
+        <button class="btn-icon chart-fullscreen-close" id="btnCloseFullscreen">✕</button>
+      </div>
+      <div class="chart-fullscreen-body">
+        <canvas id="chartFullscreenCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script src="js/nutrition.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(function(reg) {
+      console.log('SW registered:', reg.scope);
+    }).catch(function(err) {
+      console.log('SW failed:', err);
+    });
+  }
+  </script>
+</body>
+</html>
