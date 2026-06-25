@@ -5,6 +5,21 @@ const config = require('../config');
 
 let _wrapper = null;
 let _filePath = null;
+let _saveTimer = null;
+let _dirtySince = null;
+
+// 延迟保存：写入操作后等 2 秒，期间有新的写入则重置计时器
+function scheduleSave() {
+  _dirtySince = _dirtySince || Date.now();
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    if (_wrapper && _dirtySince) {
+      _wrapper.save();
+      console.log('💾 数据库已保存到磁盘');
+      _dirtySince = null;
+    }
+  }, 2000);
+}
 
 // ====== DatabaseWrapper ======
 
@@ -22,6 +37,7 @@ class DatabaseWrapper {
     let lastId = 0;
     if (s.step()) lastId = s.getAsObject().id;
     s.free();
+    scheduleSave();
     return { changes: this.sqlDb.getRowsModified(), lastInsertRowid: lastId };
   }
 
@@ -74,7 +90,9 @@ class Stmt {
     p.length > 0 ? this.db.run(this.sql, p) : this.db.run(this.sql);
     const s = this.db.prepare('SELECT last_insert_rowid() as id');
     let lastId = 0; if (s.step()) lastId = s.getAsObject().id;
-    s.free(); return { changes: this.db.getRowsModified(), lastInsertRowid: lastId };
+    s.free();
+    scheduleSave();
+    return { changes: this.db.getRowsModified(), lastInsertRowid: lastId };
   }
 }
 
@@ -99,6 +117,26 @@ async function initDB() {
   _wrapper = new DatabaseWrapper(sqlDb, _filePath);
   _wrapper.pragma('journal_mode=WAL');
   _wrapper.pragma('foreign_keys=ON');
+
+  // 每 30 秒自动保存（安全网）
+  setInterval(() => {
+    if (_wrapper && _dirtySince) {
+      _wrapper.save();
+      console.log('💾 数据库定时保存');
+      _dirtySince = null;
+    }
+  }, 30000);
+
+  // 进程退出时保存
+  const shutdown = () => {
+    if (_wrapper && _dirtySince) {
+      _wrapper.save();
+      console.log('💾 数据库退出保存');
+    }
+    process.exit();
+  };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 
   return _wrapper;
 }
