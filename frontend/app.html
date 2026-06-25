@@ -489,6 +489,30 @@
     </div>
   </section>
 
+  <!-- 热量平衡曲线 -->
+  <section class="chart-section">
+    <div class="chart-header">
+      <h2>⚖️ 热量平衡（缺口 / 盈余）</h2>
+      <div class="chart-controls">
+        <button class="btn-range btn-bal-range active" data-days="7">7天</button>
+        <button class="btn-range btn-bal-range" data-days="15">15天</button>
+        <button class="btn-range btn-bal-range" data-days="30">30天</button>
+            <button class="btn-icon btn-expand" data-chart="calBalance" title="放大查看">⛶</button>
+      </div>
+    </div>
+    <div class="chart-pagination">
+      <button class="btn-page" id="balPrevLarge" title="向前跳7天">◀◀</button>
+      <button class="btn-page" id="balPrev" title="前一天">◀</button>
+      <span class="page-range" id="balRangeLabel">--</span>
+      <button class="btn-page" id="balNext" title="后一天" disabled>▶</button>
+      <button class="btn-page" id="balNextLarge" title="向后跳7天" disabled>▶▶</button>
+    </div>
+    <div class="chart-container">
+      <canvas id="calBalanceChart"></canvas>
+    </div>
+  </section>
+  </div><!-- /chartsContainer -->
+
   <!-- API Key 设置弹窗 -->
   <div class="modal-overlay" id="modalSettings" style="display:none">
     <div class="modal">
@@ -532,30 +556,6 @@
       </div>
     </div>
   </div>
-
-  <!-- 热量平衡曲线 -->
-  <section class="chart-section">
-    <div class="chart-header">
-      <h2>⚖️ 热量平衡（缺口 / 盈余）</h2>
-      <div class="chart-controls">
-        <button class="btn-range btn-bal-range active" data-days="7">7天</button>
-        <button class="btn-range btn-bal-range" data-days="15">15天</button>
-        <button class="btn-range btn-bal-range" data-days="30">30天</button>
-            <button class="btn-icon btn-expand" data-chart="calBalance" title="放大查看">⛶</button>
-      </div>
-    </div>
-    <div class="chart-pagination">
-      <button class="btn-page" id="balPrevLarge" title="向前跳7天">◀◀</button>
-      <button class="btn-page" id="balPrev" title="前一天">◀</button>
-      <span class="page-range" id="balRangeLabel">--</span>
-      <button class="btn-page" id="balNext" title="后一天" disabled>▶</button>
-      <button class="btn-page" id="balNextLarge" title="向后跳7天" disabled>▶▶</button>
-    </div>
-    <div class="chart-container">
-      <canvas id="calBalanceChart"></canvas>
-    </div>
-  </section>
-  </div><!-- /chartsContainer -->
 
   <!-- 照片查看弹窗 -->
   <div class="photo-viewer-overlay" id="photoViewer" style="display:none">
