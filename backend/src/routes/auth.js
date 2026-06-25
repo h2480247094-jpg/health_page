@@ -32,8 +32,8 @@ router.post('/register', (req, res) => {
     // 创建用户
     const passwordHash = bcrypt.hashSync(password, 10);
     const result = db.prepare(
-      'INSERT INTO users (email, password_hash) VALUES (?, ?)'
-    ).run(email, passwordHash);
+      'INSERT INTO users (email, password_hash, birthday, height_cm) VALUES (?, ?, ?, ?)'
+    ).run(email, passwordHash, '2000-01-01', 175);
 
     const userId = result.lastInsertRowid;
 
