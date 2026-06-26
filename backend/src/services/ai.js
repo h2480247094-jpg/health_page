@@ -85,8 +85,9 @@ const FOOD_DB = {
   '杏仁': { calories: 579, protein: 21, carbs: 22, fat: 50, micros: { vitaminE: 26, vitaminB2: 1.1, vitaminB3: 3.6, magnesium: 270, calcium: 269, iron: 3.7, zinc: 3.1, potassium: 733 } },
   '腰果': { calories: 553, protein: 18, carbs: 30, fat: 44, micros: { vitaminE: 0.9, vitaminB1: 0.4, vitaminB6: 0.4, magnesium: 292, iron: 6.7, zinc: 5.8, selenium: 20 } },
   '核桃': { calories: 654, protein: 15, carbs: 14, fat: 65, micros: { vitaminE: 0.7, vitaminB6: 0.5, magnesium: 158, iron: 2.9, omega3: 9000 } },
-  '吐司': { calories: 265, protein: 8, carbs: 49, fat: 3.2, micros: { vitaminB1: 0.4, vitaminB2: 0.3, vitaminB3: 4, iron: 2.5, calcium: 75 } },
-  '牛奶': { calories: 42, protein: 3.2, carbs: 4.8, fat: 1, micros: { vitaminA: 28, vitaminD: 1.3, vitaminB2: 0.2, vitaminB12: 0.5, calcium: 120, potassium: 150, iodine: 15 } },
+  '吐司': { calories: 265, protein: 8, carbs: 49, fat: 3.2, gramsPerPiece: 28, micros: { vitaminB1: 0.4, vitaminB2: 0.3, vitaminB3: 4, iron: 2.5, calcium: 75 } },
+  '全脂牛奶': { calories: 61, protein: 3.2, carbs: 4.8, fat: 3.3, micros: { vitaminA: 28, vitaminD: 1.3, vitaminB2: 0.2, vitaminB12: 0.5, calcium: 120, potassium: 150, iodine: 15 } },
+  '牛奶': { calories: 61, protein: 3.2, carbs: 4.8, fat: 3.3, micros: { vitaminA: 28, vitaminD: 1.3, vitaminB2: 0.2, vitaminB12: 0.5, calcium: 120, potassium: 150, iodine: 15 } },
   '脱脂牛奶': { calories: 35, protein: 3.4, carbs: 5, fat: 0, micros: { vitaminA: 28, vitaminD: 1.3, vitaminB2: 0.2, vitaminB12: 0.5, calcium: 120, potassium: 150, iodine: 15 } },
   '鸡胸肉': { calories: 110, protein: 23, carbs: 0, fat: 1.2, micros: { vitaminB3: 10, vitaminB6: 0.6, vitaminB12: 0.3, iron: 0.4, zinc: 0.8, selenium: 22, potassium: 340, omega3: 30 } },
   '米饭': { calories: 116, protein: 2.6, carbs: 25, fat: 0.3, micros: { vitaminB1: 0.02, vitaminB3: 1.5, iron: 0.2, magnesium: 12, potassium: 35 } },
@@ -172,7 +173,15 @@ function calcOneFood(parsed) {
   const entry = findFoodEntry(foodName);
   if (!entry) return null;
 
-  const multiplier = unit === 'weight' ? quantity / 100 : quantity;
+  let multiplier;
+  if (unit === 'weight') {
+    multiplier = quantity / 100;
+  } else if (unit === 'piece' && entry.gramsPerPiece) {
+    // 按个算但有克重的食物（如吐司 1片≈28g），折合成每100g比例
+    multiplier = quantity * (entry.gramsPerPiece / 100);
+  } else {
+    multiplier = quantity;
+  }
 
   const micros = {};
   if (entry.micros) {
