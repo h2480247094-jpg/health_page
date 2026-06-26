@@ -96,50 +96,83 @@ const FOOD_DB = {
 const PER_PIECE_UNITS = ['个', '粒', '片', '杯', '勺'];
 const PER_100G_UNITS = ['g', '克', 'ml', '毫升'];
 
-function localFoodEstimate(foodDescription) {
-  const text = foodDescription.trim();
+// 混合食物分隔词
+const FOOD_SEPARATORS = /泡|加[入上]?|和|配|拌|炒|煮|蒸|煎|炖|烤|拌|搭配?|还有|以及|，|,|、/;
+
+/**
+ * 解析单个食物描述，返回 { quantity, unit, foodName } 或 null
+ */
+function parseOneFood(desc) {
+  const text = desc.trim();
   if (!text) return null;
 
-  let quantity = 1;
-  let foodName = text;
-
   const match = text.match(/^(\d+\.?\d*)\s*/);
-  if (match) {
-    quantity = parseFloat(match[1]);
-    foodName = text.slice(match[0].length).trim();
+  if (!match) {
+    // 没数字，假定 1 份
+    return { quantity: 1, unit: 'piece', foodName: text };
   }
 
-  // 去掉单位
-  for (const unit of [...PER_PIECE_UNITS, ...PER_100G_UNITS]) {
-    if (foodName.endsWith(unit)) {
-      foodName = foodName.slice(0, -unit.length).trim();
+  const quantity = parseFloat(match[1]);
+  const afterNum = text.slice(match[0].length); // "ml脱脂牛奶" 或 "g燕麦片" 或 "个鸡蛋"
+
+  // 检测紧跟在数字后面的单位
+  let unit = 'piece'; // 默认按个算
+  let foodName = afterNum;
+
+  for (const u of PER_100G_UNITS) {
+    if (afterNum.startsWith(u)) {
+      unit = 'weight';
+      break;
+    }
+  }
+  for (const u of PER_PIECE_UNITS) {
+    if (afterNum.startsWith(u)) {
+      unit = 'piece';
       break;
     }
   }
 
-  // 去掉"的"后缀
-  if (foodName.endsWith('的')) {
-    foodName = foodName.slice(0, -1);
-  }
-
-  // 模糊匹配
-  let entry = FOOD_DB[foodName];
-  if (!entry) {
-    for (const key of Object.keys(FOOD_DB)) {
-      if (key.includes(foodName) || foodName.includes(key)) {
-        entry = FOOD_DB[key];
-        break;
-      }
+  // 从 afterNum 开头去掉单位
+  const allUnits = [...PER_100G_UNITS, ...PER_PIECE_UNITS];
+  for (const u of allUnits) {
+    if (foodName.startsWith(u)) {
+      foodName = foodName.slice(u.length).trim();
+      break;
     }
   }
 
+  // 去掉"的"前缀
+  if (foodName.startsWith('的')) {
+    foodName = foodName.slice(1).trim();
+  }
+
+  return { quantity, unit, foodName };
+}
+
+/**
+ * 从 FOOD_DB 中模糊匹配食物
+ */
+function findFoodEntry(foodName) {
+  if (!foodName) return null;
+  if (FOOD_DB[foodName]) return FOOD_DB[foodName];
+
+  for (const key of Object.keys(FOOD_DB)) {
+    if (key.includes(foodName) || foodName.includes(key)) {
+      return FOOD_DB[key];
+    }
+  }
+  return null;
+}
+
+/**
+ * 计算单个食物营养
+ */
+function calcOneFood(parsed) {
+  const { quantity, unit, foodName } = parsed;
+  const entry = findFoodEntry(foodName);
   if (!entry) return null;
 
-  const unitType = [...PER_PIECE_UNITS].some(u => text.includes(u)) ? 'piece' : 'weight';
-  let multiplier = quantity;
-  if (unitType === 'weight') {
-    multiplier = quantity / 100;
-  }
+  const multiplier = unit === 'weight' ? quantity / 100 : quantity;
 
   const micros = {};
   if (entry.micros) {
@@ -155,6 +188,59 @@ function localFoodEstimate(foodDescription) {
     fat: Math.round(entry.fat * multiplier * 100) / 100,
     micros: Object.keys(micros).length > 0 ? micros : null,
   };
+}
+
+function localFoodEstimate(foodDescription) {
+  const text = foodDescription.trim();
+  if (!text) return null;
+
+  // 拆分混合食物
+  const parts = text.split(FOOD_SEPARATORS).filter(s => s.trim());
+  if (parts.length === 0) return null;
+
+  // 分别估算每个部分
+  const results = [];
+  for (const part of parts) {
+    const parsed = parseOneFood(part);
+    if (!parsed) continue;
+    const result = calcOneFood(parsed);
+    if (result) results.push(result);
+  }
+
+  if (results.length === 0) return null;
+
+  // 合并结果
+  const merged = {
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    micros: {},
+  };
+
+  for (const r of results) {
+    merged.calories += r.calories;
+    merged.protein += r.protein;
+    merged.carbs += r.carbs;
+    merged.fat += r.fat;
+    if (r.micros) {
+      for (const [k, v] of Object.entries(r.micros)) {
+        merged.micros[k] = (merged.micros[k] || 0) + v;
+      }
+    }
+  }
+
+  // 四舍五入
+  merged.calories = Math.round(merged.calories);
+  merged.protein = Math.round(merged.protein * 100) / 100;
+  merged.carbs = Math.round(merged.carbs * 100) / 100;
+  merged.fat = Math.round(merged.fat * 100) / 100;
+  for (const k of Object.keys(merged.micros)) {
+    merged.micros[k] = Math.round(merged.micros[k] * 100) / 100;
+  }
+  if (Object.keys(merged.micros).length === 0) merged.micros = null;
+
+  return merged;
 }
 
 /**
