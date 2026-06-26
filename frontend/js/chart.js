@@ -423,19 +423,19 @@ function initBedTimeChart(ctx) {
 }
 
 function getFirstBedTime(record) {
-  if (record.sleepSegments && record.sleepSegments.length > 0) {
-    const first = record.sleepSegments.find(s => s.bedTime);
-    return first ? first.bedTime : record.bedTime;
+  if (record.sleep_segments && record.sleep_segments.length > 0) {
+    const first = record.sleep_segments.find(s => s.bedTime);
+    return first ? first.bedTime : record.bed_time;
   }
-  return record.bedTime;
+  return record.bed_time;
 }
 
 function getFirstWakeTime(record) {
-  if (record.sleepSegments && record.sleepSegments.length > 0) {
-    const first = record.sleepSegments.find(s => s.wakeTime);
-    return first ? first.wakeTime : record.wakeTime;
+  if (record.sleep_segments && record.sleep_segments.length > 0) {
+    const first = record.sleep_segments.find(s => s.wakeTime);
+    return first ? first.wakeTime : record.wake_time;
   }
-  return record.wakeTime;
+  return record.wake_time;
 }
 
 function updateBedTimeChart(records, span, offset) {

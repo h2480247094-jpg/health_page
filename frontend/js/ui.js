@@ -322,8 +322,8 @@ function updateSegmentDurations() {
 
 function computeTotalSleep(record) {
   if (!record) return 0;
-  if (record.sleepSegments && record.sleepSegments.length > 0) {
-    return record.sleepSegments.reduce((sum, seg) => {
+  if (record.sleep_segments && record.sleep_segments.length > 0) {
+    return record.sleep_segments.reduce((sum, seg) => {
       if (seg.bedTime && seg.wakeTime) {
         const bedD = timeToDecimal(seg.bedTime);
         let wakeD = timeToDecimal(seg.wakeTime);
@@ -676,7 +676,7 @@ function renderRecords(records, searchTerm, sortOrder) {
           <div class="record-field">
             <div class="field-label">睡眠</div>
             <div class="field-value">
-              ${(r.sleepSegments && r.sleepSegments.length > 0) ? r.sleepSegments.map((seg, i) => {
+              ${(r.sleep_segments && r.sleep_segments.length > 0) ? r.sleep_segments.map((seg, i) => {
                 const bed = seg.bedTime;
                 const wake = seg.wakeTime;
                 let durStr = '';
@@ -688,8 +688,8 @@ function renderRecords(records, searchTerm, sortOrder) {
                 }
                 return `<div class="sleep-seg-line">${bed && wake ? '🌙' + bed + ' → ☀️' + wake + ' ' + durStr : (bed ? '🌙' + bed : '') + (wake ? '☀️' + wake : '')}</div>`;
               }).join('') : (
-                r.bedTime || r.wakeTime || r.sleep > 0
-                  ? `${r.bedTime ? '🌙' + r.bedTime : ''}${r.bedTime && r.wakeTime ? ' → ' : ''}${r.wakeTime ? '☀️' + r.wakeTime : ''} ${r.sleep > 0 ? formatSleepHours(r.sleep) : ''}`
+                r.bed_time || r.wake_time || r.sleep > 0
+                  ? `${r.bed_time ? '🌙' + r.bed_time : ''}${r.bed_time && r.wake_time ? ' → ' : ''}${r.wake_time ? '☀️' + r.wake_time : ''} ${r.sleep > 0 ? formatSleepHours(r.sleep) : ''}`
                   : '--'
               )}
             </div>

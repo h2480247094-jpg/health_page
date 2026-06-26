@@ -347,8 +347,8 @@ function buildHealthPrompt(records) {
     if (deficit > 0) line += `，热量缺口-${deficit}kcal`;
     else if (deficit < 0) line += `，热量盈余+${Math.abs(deficit)}kcal`;
     let sleepInfo = '';
-    if (r.sleepSegments && r.sleepSegments.length > 0) {
-      r.sleepSegments.forEach((seg, i) => {
+    if (r.sleep_segments && r.sleep_segments.length > 0) {
+      r.sleep_segments.forEach((seg, i) => {
         if (seg.bedTime && seg.wakeTime) {
           const bedD = timeToDecimal(seg.bedTime);
           let wakeD = timeToDecimal(seg.wakeTime);
@@ -358,8 +358,8 @@ function buildHealthPrompt(records) {
         }
       });
     } else {
-      if (r.bedTime) sleepInfo += `入睡${r.bedTime}`;
-      if (r.wakeTime) sleepInfo += (sleepInfo ? ' 醒来' : '醒来') + r.wakeTime;
+      if (r.bed_time) sleepInfo += `入睡${r.bed_time}`;
+      if (r.wake_time) sleepInfo += (sleepInfo ? ' 醒来' : '醒来') + r.wake_time;
       if (r.sleep > 0) sleepInfo += (sleepInfo ? ' ' : '') + `睡${r.sleep}h`;
     }
     line += `\n  ${sleepInfo || '无睡眠数据'}`;
