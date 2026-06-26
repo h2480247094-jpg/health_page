@@ -709,7 +709,7 @@ function renderRecords(records, searchTerm, sortOrder) {
                 return `${name} <span class="nutrient-val">${+v.toFixed(1)}</span> <span class="nutrient-unit">${unit}</span>`;
               }
 
-              function buildFoodHtml(d, idx) {
+              function buildFoodHtml(d) {
                 let calLine = d.calories ? ` 热量 <span class="nutrient-val">${d.calories}</span> <span class="nutrient-unit">kcal</span>` : '';
                 const rows = [];
                 const sep = '  <span class="nutrient-sep">|</span>  ';
@@ -720,13 +720,13 @@ function renderRecords(records, searchTerm, sortOrder) {
                 if (d.fat) row([`脂肪 <span class="nutrient-val">${Math.round(d.fat * 100) / 100}</span> <span class="nutrient-unit">g</span>`]);
                 for (const k of MICRO_KEYS) { if (micros[k] > 0) row([fmtMicro(k, micros[k])]); }
                 const hasExpand = rows.length > 0;
-                const uid = `diet-expand-${r.id}-${idx}`;
+                const uid = `diet-expand-${r.id}-${d._origIdx}`;
                 let expandToggle = '', expandBlock = '';
                 if (hasExpand) {
                   expandToggle = `<button class="btn-toggle-micro" onclick="var b=document.getElementById('${uid}');var s=b.style.display==='none'?'block':'none';b.style.display=s;this.innerHTML=s==='block'?'▾ 明细':'▸ 明细';event.stopPropagation()">▸ 明细</button>`;
                   expandBlock = `<div class="diet-expand-block" id="${uid}" style="display:none">${rows.join('')}</div>`;
                 }
-                return { calLine, expandToggle, expandBlock, hasExpand, foodHtml: `<div class="diet-meal-item"><span>${escapeHtml(d.description)}</span>${calLine}${expandToggle}<button class="btn-del-item" data-record-id="${r.id}" data-diet-idx="${d._origIdx}" title="删除">✕</button>${expandBlock}</div>` };
+                return `<div class="diet-meal-item"><span>${escapeHtml(d.description)}</span>${calLine}${expandToggle}<button class="btn-del-item" data-record-id="${r.id}" data-diet-idx="${d._origIdx}" title="删除">✕</button>${expandBlock}</div>`;
               }
 
               // Group by mealType
@@ -747,7 +747,7 @@ function renderRecords(records, searchTerm, sortOrder) {
                 const groupCarbs = items.reduce((s, d) => s + (d.carbs || 0), 0);
                 const groupFat = items.reduce((s, d) => s + (d.fat || 0), 0);
                 const macroLine = [groupCal > 0 ? `${groupCal}kcal` : '', groupProtein > 0 ? `蛋白${groupProtein.toFixed(0)}g` : '', groupCarbs > 0 ? `碳水${groupCarbs.toFixed(0)}g` : '', groupFat > 0 ? `脂肪${groupFat.toFixed(0)}g` : ''].filter(Boolean).join(' · ');
-                const foodsHtml = items.map((d, i) => buildFoodHtml(d, i).foodHtml).join('');
+                const foodsHtml = items.map(d => buildFoodHtml(d)).join('');
                 return `<div class="diet-meal-group meal-${mt}"><div class="diet-meal-header"><span class="diet-meal-label">${MEAL_LABELS[mt] || '加餐'}</span>${macroLine ? `<span class="diet-meal-macros">${macroLine}</span>` : ''}</div>${foodsHtml}</div>`;
               }).join('');
             })()}</div>` : ''}
