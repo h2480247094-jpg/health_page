@@ -694,6 +694,69 @@ section {
 .tag-dinner { background: #d6eaf8; color: #1a5276; }
 .tag-snack { background: #f5e6f8; color: #6c3483; }
 
+/* 按餐型分组 */
+.diet-meal-group {
+  border-radius: 10px;
+  padding: 6px 8px;
+  background: #fafafa;
+  border: 1px solid #eee;
+}
+.diet-meal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  border-bottom: 1px dashed #e0e0e0;
+}
+.diet-meal-label {
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+.diet-meal-group:has(.tag-breakfast) .diet-meal-label,
+.diet-meal-header:has(+ .diet-meal-item) { }
+/* meal group tint by meal type */
+.diet-meal-group.meal-breakfast { background: #fffdf5; border-color: #ffeaa7; }
+.diet-meal-group.meal-breakfast .diet-meal-label { color: #856404; }
+.diet-meal-group.meal-lunch     { background: #f6fdf8; border-color: #b7e4c7; }
+.diet-meal-group.meal-lunch .diet-meal-label     { color: #155724; }
+.diet-meal-group.meal-dinner    { background: #f6fafd; border-color: #b8d8f0; }
+.diet-meal-group.meal-dinner .diet-meal-label    { color: #1a5276; }
+.diet-meal-group.meal-snack     { background: #fdf6fe; border-color: #e8c8f0; }
+.diet-meal-group.meal-snack .diet-meal-label     { color: #6c3483; }
+.diet-meal-macros {
+  font-size: 0.7rem;
+  color: #888;
+  font-weight: 500;
+}
+.diet-meal-item {
+  display: flex;
+  align-items: center;
+  padding: 3px 0;
+  font-size: 0.75rem;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.diet-meal-item > span {
+  font-weight: 600;
+  color: #444;
+}
+.diet-meal-item .nutrient-val { font-size: 0.9em; }
+.diet-meal-item .nutrient-unit { font-size: 0.85em; }
+.diet-meal-item .btn-del-item {
+  margin-left: auto;
+  font-size: 0.65rem;
+  padding: 1px 6px;
+}
+.diet-meal-item .btn-toggle-micro {
+  font-size: 0.68rem;
+  margin-left: 4px;
+}
+.diet-meal-item .diet-expand-block {
+  width: 100%;
+  flex-basis: 100%;
+}
+
 /* Nutrient display in diet tags and summary */
 .diet-tag-label {
   display: block;

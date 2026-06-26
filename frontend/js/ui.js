@@ -701,40 +701,54 @@ function renderRecords(records, searchTerm, sortOrder) {
               const MEAL_ORDER = { breakfast: 0, lunch: 1, dinner: 2, snack: 3 };
               const sorted = (r.diet || []).map((d, i) => ({ ...d, _origIdx: i }))
                 .sort((a, b) => (MEAL_ORDER[a.mealType] ?? 4) - (MEAL_ORDER[b.mealType] ?? 4));
-              return sorted.map((d, idx) => {
-                // Calories — always visible inline
-                let calLine = d.calories ? ` 热量 <span class="nutrient-val">${d.calories}</span> <span class="nutrient-unit">kcal</span>` : '';
 
-                // Build expandable rows with specific grouping
+              function fmtMicro(k, v) {
+                const info = MICRONUTRIENT_RDA[k];
+                const name = info ? info.name : k;
+                const unit = info ? info.unit : '';
+                return `${name} <span class="nutrient-val">${+v.toFixed(1)}</span> <span class="nutrient-unit">${unit}</span>`;
+              }
+
+              function buildFoodHtml(d, idx) {
+                let calLine = d.calories ? ` 热量 <span class="nutrient-val">${d.calories}</span> <span class="nutrient-unit">kcal</span>` : '';
                 const rows = [];
                 const sep = '  <span class="nutrient-sep">|</span>  ';
-                function fmtMicro(k, v) {
-                  const info = MICRONUTRIENT_RDA[k];
-                  const name = info ? info.name : k;
-                  const unit = info ? info.unit : '';
-                  return `${name} <span class="nutrient-val">${+v.toFixed(1)}</span> <span class="nutrient-unit">${unit}</span>`;
-                }
                 function row(arr) { if (arr.length) rows.push(`<div class="diet-expand-row">${arr.join(sep)}</div>`); }
                 const micros = (d.micros && typeof MICRO_KEYS !== 'undefined') ? d.micros : {};
-
-                // Each nutrient its own row
                 if (d.protein) row([`蛋白质 <span class="nutrient-val">${Math.round(d.protein * 100) / 100}</span> <span class="nutrient-unit">g</span>`]);
                 if (d.carbs) row([`碳水 <span class="nutrient-val">${Math.round(d.carbs * 100) / 100}</span> <span class="nutrient-unit">g</span>`]);
                 if (d.fat) row([`脂肪 <span class="nutrient-val">${Math.round(d.fat * 100) / 100}</span> <span class="nutrient-unit">g</span>`]);
-                for (const k of MICRO_KEYS) {
-                  if (micros[k] > 0) row([fmtMicro(k, micros[k])]);
-                }
-
+                for (const k of MICRO_KEYS) { if (micros[k] > 0) row([fmtMicro(k, micros[k])]); }
                 const hasExpand = rows.length > 0;
                 const uid = `diet-expand-${r.id}-${idx}`;
-                let expandToggle = '';
-                let expandBlock = '';
+                let expandToggle = '', expandBlock = '';
                 if (hasExpand) {
                   expandToggle = `<button class="btn-toggle-micro" onclick="var b=document.getElementById('${uid}');var s=b.style.display==='none'?'block':'none';b.style.display=s;this.innerHTML=s==='block'?'▾ 明细':'▸ 明细';event.stopPropagation()">▸ 明细</button>`;
                   expandBlock = `<div class="diet-expand-block" id="${uid}" style="display:none">${rows.join('')}</div>`;
                 }
+                return { calLine, expandToggle, expandBlock, hasExpand, foodHtml: `<div class="diet-meal-item"><span>${escapeHtml(d.description)}</span>${calLine}${expandToggle}<button class="btn-del-item" data-record-id="${r.id}" data-diet-idx="${d._origIdx}" title="删除">✕</button>${expandBlock}</div>` };
+              }
 
-                return `<span class="diet-tag tag-${d.mealType || 'breakfast'}"><span class="diet-tag-label">${MEAL_LABELS[d.mealType] || '早餐'} ${escapeHtml(d.description)}</span>${calLine || expandToggle ? `<div class="diet-macro-line">${calLine}${expandToggle}<button class="btn-del-item" data-record-id="${r.id}" data-diet-idx="${d._origIdx}" title="删除这一餐">✕</button></div>` : `<button class="btn-del-item" data-record-id="${r.id}" data-diet-idx="${d._origIdx}" title="删除这一餐">✕</button>`}${expandBlock}</span>`;
+              // Group by mealType
+              const groups = {};
+              for (const d of sorted) {
+                const mt = d.mealType || 'snack';
+                if (!groups[mt]) groups[mt] = [];
+                groups[mt].push(d);
+              }
+
+              // Render groups in meal order
+              const mealOrder = ['breakfast','lunch','dinner','snack'];
+              return mealOrder.map(mt => {
+                if (!groups[mt]) return '';
+                const items = groups[mt];
+                const groupCal = items.reduce((s, d) => s + (d.calories || 0), 0);
+                const groupProtein = items.reduce((s, d) => s + (d.protein || 0), 0);
+                const groupCarbs = items.reduce((s, d) => s + (d.carbs || 0), 0);
+                const groupFat = items.reduce((s, d) => s + (d.fat || 0), 0);
+                const macroLine = [groupCal > 0 ? `${groupCal}kcal` : '', groupProtein > 0 ? `蛋白${groupProtein.toFixed(0)}g` : '', groupCarbs > 0 ? `碳水${groupCarbs.toFixed(0)}g` : '', groupFat > 0 ? `脂肪${groupFat.toFixed(0)}g` : ''].filter(Boolean).join(' · ');
+                const foodsHtml = items.map((d, i) => buildFoodHtml(d, i).foodHtml).join('');
+                return `<div class="diet-meal-group meal-${mt}"><div class="diet-meal-header"><span class="diet-meal-label">${MEAL_LABELS[mt] || '加餐'}</span>${macroLine ? `<span class="diet-meal-macros">${macroLine}</span>` : ''}</div>${foodsHtml}</div>`;
               }).join('');
             })()}</div>` : ''}
           </div>
