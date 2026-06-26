@@ -154,7 +154,7 @@ function setQuickDates(dateStr) {
   });
 }
 
-async function saveWeight() {
+async function handleSaveWeight() {
   const date = document.getElementById('qeWeightDate').value;
   const weight = parseFloat(document.getElementById('qeWeight').value);
   if (!date) { showQuickFeedback('fbWeight', '请选择日期', 'error'); return; }
@@ -171,7 +171,7 @@ async function saveWeight() {
   window.__app && window.__app.refresh();
 }
 
-async function saveSleep() {
+async function handleSaveSleep() {
   const date = document.getElementById('qeSleepDate').value;
   if (!date) { showQuickFeedback('fbSleep', '请选择日期', 'error'); return; }
 

@@ -375,8 +375,8 @@ const app = {
     });
 
     // Quick-entry save buttons
-    document.getElementById('btnSaveWeight').addEventListener('click', saveWeight);
-    document.getElementById('btnSaveSleep').addEventListener('click', saveSleep);
+    document.getElementById('btnSaveWeight').addEventListener('click', handleSaveWeight);
+    document.getElementById('btnSaveSleep').addEventListener('click', handleSaveSleep);
     document.getElementById('btnSaveDiet').addEventListener('click', saveDiet);
     document.getElementById('btnSaveExercise').addEventListener('click', saveExercise);
 
@@ -390,12 +390,12 @@ const app = {
     // Quick-entry: Enter key to save
     ['qeWeight', 'qeWeightDate'].forEach(id => {
       document.getElementById(id).addEventListener('keydown', e => {
-        if (e.key === 'Enter') saveWeight();
+        if (e.key === 'Enter') handleSaveWeight();
       });
     });
     ['qeSleepDate'].forEach(id => {
       document.getElementById(id).addEventListener('keydown', e => {
-        if (e.key === 'Enter') saveSleep();
+        if (e.key === 'Enter') handleSaveSleep();
       });
     });
     ['qeDietDesc', 'qeDietCal', 'qeDietProtein', 'qeDietCarbs', 'qeDietFat', 'qeDietDate'].forEach(id => {
