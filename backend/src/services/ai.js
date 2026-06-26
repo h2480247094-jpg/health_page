@@ -87,7 +87,7 @@ const FOOD_DB = {
   '核桃': { calories: 654, protein: 15, carbs: 14, fat: 65, micros: { vitaminE: 0.7, vitaminB6: 0.5, magnesium: 158, iron: 2.9, omega3: 9000 } },
   '吐司': { calories: 265, protein: 8, carbs: 49, fat: 3.2, micros: { vitaminB1: 0.4, vitaminB2: 0.3, vitaminB3: 4, iron: 2.5, calcium: 75 } },
   '牛奶': { calories: 42, protein: 3.2, carbs: 4.8, fat: 1, micros: { vitaminA: 28, vitaminD: 1.3, vitaminB2: 0.2, vitaminB12: 0.5, calcium: 120, potassium: 150, iodine: 15 } },
-  '脱脂牛奶': { calories: 35, protein: 3.4, carbs: 5, fat: 0.2, micros: { vitaminA: 28, vitaminD: 1.3, vitaminB2: 0.2, vitaminB12: 0.5, calcium: 120, potassium: 150, iodine: 15 } },
+  '脱脂牛奶': { calories: 35, protein: 3.4, carbs: 5, fat: 0, micros: { vitaminA: 28, vitaminD: 1.3, vitaminB2: 0.2, vitaminB12: 0.5, calcium: 120, potassium: 150, iodine: 15 } },
   '鸡胸肉': { calories: 110, protein: 23, carbs: 0, fat: 1.2, micros: { vitaminB3: 10, vitaminB6: 0.6, vitaminB12: 0.3, iron: 0.4, zinc: 0.8, selenium: 22, potassium: 340, omega3: 30 } },
   '米饭': { calories: 116, protein: 2.6, carbs: 25, fat: 0.3, micros: { vitaminB1: 0.02, vitaminB3: 1.5, iron: 0.2, magnesium: 12, potassium: 35 } },
   '燕麦片': { calories: 379, protein: 14, carbs: 67, fat: 6.5, micros: { vitaminB1: 0.8, vitaminB2: 0.2, vitaminB3: 1, vitaminB6: 0.1, folate: 56, iron: 4.7, magnesium: 177, zinc: 3.6, selenium: 29, potassium: 429 } },
