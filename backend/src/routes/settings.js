@@ -9,12 +9,15 @@ router.use(authMiddleware);
 router.get('/', (req, res) => {
   try {
     const user = db.prepare(
-      'SELECT username, gender, birthday, height_cm, api_key FROM users WHERE id = ?'
+      'SELECT username, gender, birthday, height_cm, api_key, preferences FROM users WHERE id = ?'
     ).get(req.userId);
 
     if (!user) {
       return res.status(404).json({ error: '用户不存在' });
     }
+
+    let preferences = {};
+    try { preferences = JSON.parse(user.preferences || '{}'); } catch (e) {}
 
     res.json({
       username: user.username || '',
@@ -22,6 +25,7 @@ router.get('/', (req, res) => {
       birthday: user.birthday,
       height_cm: user.height_cm,
       api_key: user.api_key || '',
+      preferences,
     });
   } catch (err) {
     console.error('获取设置失败:', err);
@@ -32,7 +36,7 @@ router.get('/', (req, res) => {
 // 更新用户设置
 router.put('/', (req, res) => {
   try {
-    const { username, gender, birthday, height_cm, api_key } = req.body;
+    const { username, gender, birthday, height_cm, api_key, preferences } = req.body;
 
     const updates = [];
     const params = [];
@@ -64,6 +68,10 @@ router.put('/', (req, res) => {
       updates.push('api_key = ?');
       params.push(api_key);
     }
+    if (preferences !== undefined) {
+      updates.push('preferences = ?');
+      params.push(typeof preferences === 'string' ? preferences : JSON.stringify(preferences));
+    }
 
     if (updates.length === 0) {
       return res.status(400).json({ error: '没有要更新的字段' });
@@ -77,10 +85,12 @@ router.put('/', (req, res) => {
     ).run(...params);
 
     const user = db.prepare(
-      'SELECT username, gender, birthday, height_cm, api_key FROM users WHERE id = ?'
+      'SELECT username, gender, birthday, height_cm, api_key, preferences FROM users WHERE id = ?'
     ).get(req.userId);
 
-    res.json(user);
+    let prefs = {};
+    try { prefs = JSON.parse(user.preferences || '{}'); } catch (e) {}
+    res.json({ ...user, preferences: prefs });
   } catch (err) {
     console.error('更新设置失败:', err);
     res.status(500).json({ error: '更新设置失败' });

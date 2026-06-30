@@ -31,6 +31,14 @@ function initSchema() {
     // 列已存在则忽略
   }
 
+  // 迁移：为已有 users 表添加 preferences 列（如果不存在）
+  try {
+    db.run("ALTER TABLE users ADD COLUMN preferences TEXT DEFAULT '{}'");
+    console.log('✅ 数据库迁移：已添加 preferences 列');
+  } catch (e) {
+    // 列已存在则忽略
+  }
+
   // 保存到磁盘
   db.save();
   console.log('✅ 数据表初始化完成');

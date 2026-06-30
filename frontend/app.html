@@ -549,6 +549,38 @@
           </div>
         </div>
         <p class="modal-hint">年龄根据生日自动计算；填写身高用于 BMI / 基础代谢计算。</p>
+
+        <!-- 用户偏好 -->
+        <div class="pref-section">
+          <h4 class="pref-title">🎯 目标（多选）</h4>
+          <div class="pref-chips" id="prefGoals"></div>
+        </div>
+        <div class="pref-section">
+          <h4 class="pref-title">🍽️ 饮食偏好（多选）</h4>
+          <div class="pref-chips" id="prefDiet"></div>
+        </div>
+        <div class="pref-section">
+          <h4 class="pref-title">🏃 活动水平</h4>
+          <select id="prefActivity" class="full-width">
+            <option value="">未设置</option>
+            <option value="久坐">久坐</option>
+            <option value="轻度活动">轻度活动</option>
+            <option value="中高强度训练">中高强度训练</option>
+          </select>
+        </div>
+        <div class="pref-section">
+          <h4 class="pref-title">🚫 过敏/禁忌（多选）</h4>
+          <div class="pref-chips" id="prefAllergies"></div>
+        </div>
+        <div class="pref-section">
+          <h4 class="pref-title">📝 关注领域（多选）</h4>
+          <div class="pref-chips" id="prefConcerns"></div>
+        </div>
+        <div class="pref-section">
+          <h4 class="pref-title">💬 想改善什么？</h4>
+          <input type="text" id="prefImprove" placeholder="比如：肩颈酸痛、入睡困难、下午犯困…" class="full-width" maxlength="200">
+        </div>
+
         <div class="form-group">
           <label for="inputApiKey">DeepSeek API Key（可选）</label>
           <input type="password" id="inputApiKey" placeholder="sk-xxxxxxxxxxxxxxxx" class="full-width">

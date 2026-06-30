@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     gender          TEXT DEFAULT 'male' CHECK(gender IN ('male','female')),
     birthday        TEXT DEFAULT '2000-01-01',
     height_cm       INTEGER DEFAULT 175,
+    preferences     TEXT DEFAULT '{}',
     created_at      TEXT DEFAULT (datetime('now')),
     updated_at      TEXT DEFAULT (datetime('now'))
 );

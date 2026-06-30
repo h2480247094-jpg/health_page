@@ -881,8 +881,75 @@ function calcAge(birthday) {
   return age;
 }
 
+// ===== 偏好选择 UI =====
+const PREF_CHIP_DEFS = {
+  goals:     ['减脂','增肌','维持','改善睡眠'],
+  diet:      ['不吃辣','不吃猪肉','偏好清淡','低碳水','重口味'],
+  allergies: ['海鲜过敏','乳糖不耐受'],
+  concerns:  ['护眼','护肝','关节','皮肤'],
+};
+
+function initPrefChips() {
+  for (const [key, options] of Object.entries(PREF_CHIP_DEFS)) {
+    const container = document.getElementById('pref' + key.charAt(0).toUpperCase() + key.slice(1));
+    if (!container) continue;
+    container.innerHTML = '';
+    options.forEach(opt => {
+      const chip = document.createElement('span');
+      chip.className = 'pref-chip';
+      chip.textContent = opt;
+      chip.dataset.key = key;
+      chip.dataset.value = opt;
+      chip.addEventListener('click', () => {
+        chip.classList.toggle('active');
+      });
+      container.appendChild(chip);
+    });
+  }
+}
+
+function getPrefData() {
+  const prefs = {};
+  // Multi-select chips
+  for (const [key] of Object.entries(PREF_CHIP_DEFS)) {
+    const containerId = 'pref' + key.charAt(0).toUpperCase() + key.slice(1);
+    const container = document.getElementById(containerId);
+    if (container) {
+      const selected = [...container.querySelectorAll('.pref-chip.active')].map(c => c.dataset.value);
+      prefs[key] = selected;
+    }
+  }
+  prefs.activity = document.getElementById('prefActivity')?.value || '';
+  prefs.improve = document.getElementById('prefImprove')?.value?.trim() || '';
+  return prefs;
+}
+
+function setPrefData(prefs) {
+  if (!prefs) return;
+  // Multi-select chips
+  for (const [key] of Object.entries(PREF_CHIP_DEFS)) {
+    const values = prefs[key] || [];
+    const containerId = 'pref' + key.charAt(0).toUpperCase() + key.slice(1);
+    const container = document.getElementById(containerId);
+    if (container) {
+      container.querySelectorAll('.pref-chip').forEach(c => {
+        if (values.includes(c.dataset.value)) c.classList.add('active');
+      });
+    }
+  }
+  if (prefs.activity) {
+    const sel = document.getElementById('prefActivity');
+    if (sel) sel.value = prefs.activity;
+  }
+  if (prefs.improve) {
+    const inp = document.getElementById('prefImprove');
+    if (inp) inp.value = prefs.improve;
+  }
+}
+
 async function loadSettings() {
   try {
+    initPrefChips();
     const settings = await getSettings();
     document.getElementById('inputUsername').value = settings.username || '';
     document.getElementById('inputGender').value = settings.gender || 'male';
@@ -891,6 +958,7 @@ async function loadSettings() {
     document.getElementById('inputHeight').value = settings.height_cm || '';
     const age = calcAge(settings.birthday);
     document.getElementById('inputAge').value = age || '';
+    setPrefData(settings.preferences);
   } catch (err) {
     console.error('加载设置失败:', err);
   }
@@ -910,7 +978,8 @@ async function saveSettings() {
   }
 
   try {
-    const data = { username, gender, api_key: apiKey };
+    const preferences = getPrefData();
+    const data = { username, gender, api_key: apiKey, preferences };
     if (birthday) data.birthday = birthday;
     if (heightCm) data.height_cm = heightCm;
     await updateSettings(data);

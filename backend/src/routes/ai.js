@@ -14,7 +14,7 @@ router.post('/health-advice', async (req, res) => {
     const { question } = req.body;
 
     // 获取用户信息
-    const user = db.prepare('SELECT gender, birthday, height_cm, api_key FROM users WHERE id = ?').get(req.userId);
+    const user = db.prepare('SELECT gender, birthday, height_cm, api_key, preferences FROM users WHERE id = ?').get(req.userId);
     const userApiKey = (user.api_key || '').trim();
 
     // 获取健康数据
@@ -92,7 +92,7 @@ router.post('/skincare-advice', async (req, res) => {
   try {
     const { question } = req.body;
 
-    const user = db.prepare('SELECT gender, birthday, api_key FROM users WHERE id = ?').get(req.userId);
+    const user = db.prepare('SELECT gender, birthday, api_key, preferences FROM users WHERE id = ?').get(req.userId);
     const userApiKey = (user.api_key || '').trim();
     const records = db.prepare(
       'SELECT * FROM health_records WHERE user_id = ? ORDER BY date DESC LIMIT 30'
@@ -178,7 +178,13 @@ router.delete('/chat-history', (req, res) => {
 // ---- 构建系统提示词 ----
 function buildHealthSystemPrompt(user, records) {
   const age = calculateAge(user.birthday);
+  const prefs = parsePreferences(user.preferences);
+
   let prompt = `你是一位专业的健康管理教练。用户信息：性别${user.gender === 'male' ? '男' : '女'}，年龄${age}岁，身高${user.height_cm}cm。`;
+
+  // 注入用户偏好
+  const prefLines = buildPreferencePrompt(prefs);
+  if (prefLines) prompt += '\n\n' + prefLines;
 
   if (records.length > 0) {
     prompt += '\n\n用户最近的健康数据：';
@@ -207,7 +213,13 @@ function buildHealthSystemPrompt(user, records) {
 
 function buildSkincareSystemPrompt(user, records) {
   const age = calculateAge(user.birthday);
+  const prefs = parsePreferences(user.preferences);
+
   let prompt = `你是一位专业的护肤顾问。用户：${user.gender === 'male' ? '男' : '女'}，${age}岁。`;
+
+  // 注入用户偏好
+  const prefLines = buildPreferencePrompt(prefs);
+  if (prefLines) prompt += '\n\n' + prefLines;
 
   if (records.length > 0) {
     const recent = records.slice(0, 14).reverse();
@@ -232,6 +244,54 @@ function buildSkincareSystemPrompt(user, records) {
 
   prompt += '\n\n请从饮食、作息、护肤习惯、补剂等角度给出建议。用中文回答，简洁实用。';
   return prompt;
+}
+
+// 偏好标签映射
+const PREF_LABELS = {
+  goals:    { label: '🎯 目标', values: { '减脂':'减脂','增肌':'增肌','维持':'维持体重','改善睡眠':'改善睡眠' } },
+  diet:     { label: '🍽️ 饮食偏好', values: { '不吃辣':'不吃辣','不吃猪肉':'不吃猪肉','偏好清淡':'偏好清淡','低碳水':'低碳水','重口味':'重口味' } },
+  activity: { label: '🏃 活动水平', values: { '久坐':'久坐','轻度活动':'轻度活动','中高强度训练':'中高强度训练' } },
+  allergies:{ label: '🚫 过敏/禁忌', values: { '海鲜过敏':'海鲜过敏','乳糖不耐受':'乳糖不耐受' } },
+  concerns: { label: '📝 关注领域', values: { '护眼':'护眼','护肝':'护肝','关节':'关节','皮肤':'皮肤' } },
+};
+
+function parsePreferences(prefsJson) {
+  try { return JSON.parse(prefsJson || '{}'); } catch { return {}; }
+}
+
+function buildPreferencePrompt(prefs) {
+  const lines = ['【用户偏好与背景】'];
+  let hasPref = false;
+
+  if (prefs.goals && prefs.goals.length > 0) {
+    lines.push(`目标：${prefs.goals.join('、')}`);
+    hasPref = true;
+  }
+  if (prefs.diet && prefs.diet.length > 0) {
+    lines.push(`饮食偏好：${prefs.diet.join('、')}`);
+    hasPref = true;
+  }
+  if (prefs.activity) {
+    lines.push(`活动水平：${prefs.activity}`);
+    hasPref = true;
+  }
+  if (prefs.allergies && prefs.allergies.length > 0) {
+    lines.push(`过敏/禁忌：${prefs.allergies.join('、')}`);
+    hasPref = true;
+  }
+  if (prefs.concerns && prefs.concerns.length > 0) {
+    lines.push(`关注领域：${prefs.concerns.join('、')}`);
+    hasPref = true;
+  }
+  if (prefs.improve && prefs.improve.trim()) {
+    lines.push(`特别想改善：${prefs.improve.trim()}`);
+    hasPref = true;
+  }
+
+  if (!hasPref) return '';
+
+  lines.push('\n请严格根据以上偏好给出建议。饮食推荐必须避开过敏和饮食禁忌；运动建议必须匹配用户的活动水平；关注领域的建议要详细；特别想改善的问题要优先回应。');
+  return lines.join('\n');
 }
 
 function calculateAge(birthday) {
