@@ -179,8 +179,9 @@ router.delete('/chat-history', (req, res) => {
 function buildHealthSystemPrompt(user, records) {
   const age = calculateAge(user.birthday);
   const prefs = parsePreferences(user.preferences);
+  const genderLabel = user.gender === 'male' ? '男' : '女';
 
-  let prompt = `你是一位专业的健康管理教练。用户信息：性别${user.gender === 'male' ? '男' : '女'}，年龄${age}岁，身高${user.height_cm}cm。`;
+  let prompt = `你是一位温暖贴心的私人健康伙伴，懂营养学、运动科学和睡眠知识。用户：${genderLabel}，${age}岁，身高${user.height_cm}cm。`;
 
   // 注入用户偏好
   const prefLines = buildPreferencePrompt(prefs);
@@ -207,15 +208,27 @@ function buildHealthSystemPrompt(user, records) {
     }
   }
 
-  prompt += '\n\n请用中文回答，给出具体、可操作的建议。保持简洁友好，每条建议不超过3句话。';
+  prompt += `\n\n要求：
+  - 用中文回答，像朋友聊天一样自然，不要用 markdown 格式
+  - 可以适当使用 emoji 表情增加亲和力
+  - 先肯定用户的努力和进步，再温和地指出可以改善的地方
+  - 所有建议必须基于用户的实际偏好和数据，不做任何身份假设
+  - 如果用户设置了活动水平，运动建议要匹配
+  - 如果用户有关注领域，优先深入分析
+  - 饮食建议必须避开用户的过敏/禁忌和饮食偏好
+  - 如果数据不够充分，诚实告知
+  - 建议要实用可操作，不空泛，不推荐极端方法
+  - 结合补剂记录评估搭配是否合理`;
+
   return prompt;
 }
 
 function buildSkincareSystemPrompt(user, records) {
   const age = calculateAge(user.birthday);
   const prefs = parsePreferences(user.preferences);
+  const genderLabel = user.gender === 'male' ? '男' : '女';
 
-  let prompt = `你是一位专业的护肤顾问。用户：${user.gender === 'male' ? '男' : '女'}，${age}岁。`;
+  let prompt = `你是一位专业贴心的护肤顾问，同时懂营养学、睡眠和运动对皮肤的影响。用户：${genderLabel}，${age}岁。`;
 
   // 注入用户偏好
   const prefLines = buildPreferencePrompt(prefs);
@@ -242,7 +255,15 @@ function buildSkincareSystemPrompt(user, records) {
     }
   }
 
-  prompt += '\n\n请从饮食、作息、护肤习惯、补剂等角度给出建议。用中文回答，简洁实用。';
+  prompt += `\n\n要求：
+  - 用中文回答，像朋友聊天一样自然，不要用 markdown 格式
+  - 可以适当使用 emoji 表情
+  - 所有建议基于用户实际数据和个人偏好，不做任何身份假设
+  - 结合作息、饮食、运动、补剂等数据综合给出护肤建议
+  - 如果用户填写了过敏/禁忌，推荐产品时需避开
+  - 如果用户有关注领域（如皮肤），优先深入分析
+  - 建议要具体可操作，不空泛`;
+
   return prompt;
 }
 
