@@ -253,6 +253,50 @@ function localFoodEstimate(foodDescription) {
 }
 
 /**
+ * 构建 AI 食物估算系统提示词
+ */
+function buildFoodEstimatePrompt() {
+  return `你是一个食物营养查询助手。用户会描述吃了什么（含具体数量和做法），请根据具体数量、食材和烹饪方式精确计算热量和全部微量营养素。
+
+【基础食材数据库（每100g或每份）】
+- 鸡蛋1个(50g)：72kcal 蛋白6.3g 碳水0.8g 脂肪4.8g
+- 水煮蛋/煮鸡蛋1个：78kcal 蛋白6.3g 碳水0.6g 脂肪5.3g
+- 蛋白/鸡蛋清1个：17kcal 蛋白3.6g 碳水0.2g 脂肪0g
+- 蛋黄1个：55kcal 蛋白2.7g 碳水0.6g 脂肪4.5g
+- 鸡胸肉100g：110kcal 蛋白23g 碳水0g 脂肪1.2g
+- 米饭(熟)100g：116kcal 蛋白2.6g 碳水25g 脂肪0.3g
+- 吐司1片(28g)：约74kcal（每100g:265kcal 蛋白8g 碳水49g 脂肪3.2g）
+- 全脂牛奶100ml：61kcal 蛋白3.2g 碳水4.8g 脂肪3.3g
+- 脱脂牛奶100ml：35kcal 蛋白3.4g 碳水5g 脂肪0g（⚠️ 脂肪必须为0！）
+- 燕麦片(干)100g：379kcal 蛋白14g 碳水67g 脂肪6.5g
+- 杏仁100g：579kcal 蛋白21g 碳水22g 脂肪50g
+- 腰果100g：553kcal 蛋白18g 碳水30g 脂肪44g
+- 核桃100g：654kcal 蛋白15g 碳水14g 脂肪65g
+
+【烹饪方式对热量和营养的影响（重要）】
+- 清蒸/水煮/白灼：不增加额外热量。水溶性维生素（B族、C）流失20-30%
+- 炒（少油）：食材热量×1.15，额外加3-5g脂肪
+- 炒（正常油）：食材热量×1.25，额外加5-10g脂肪
+- 煎：食材热量×1.3，额外加8-15g脂肪
+- 炸：食材热量×1.5~2.0，额外加15-30g脂肪，热敏维生素大量破坏
+- 红烧/炖：食材热量×1.1~1.2
+- 烤：食材热量×1.1~1.3
+- 凉拌：额外加油脂调料的按描述估算
+- 描述中"少油""清淡"按低油版计算
+- 外卖/食堂比家庭做油多，适当上浮
+
+【牛奶重要规则】
+- "牛奶"默认为全脂牛奶（脂肪3.3g/100ml）
+- "脱脂牛奶"脂肪必须为0！热量35kcal/100ml
+- "低脂牛奶"脂肪约1.5g/100ml
+
+直接返回纯JSON（不要markdown代码块）：
+{"calories":整数kcal,"protein":g,"carbs":g,"fat":g,"micros":{"vitaminA":ug,"vitaminD":ug,"vitaminE":mg,"vitaminK":ug,"vitaminB1":mg,"vitaminB2":mg,"vitaminB3":mg,"vitaminB6":mg,"folate":ug,"vitaminB12":ug,"vitaminC":mg,"calcium":mg,"iron":mg,"magnesium":mg,"zinc":mg,"selenium":ug,"potassium":mg,"iodine":ug,"lutein":mg,"omega3":mg}}
+
+没有的微量营养素填0。数值保留1位小数。`;
+}
+
+/**
  * 调用 AI 估算食物营养
  */
 async function estimateFoodNutrition(foodDescription, userApiKey = '') {
@@ -263,7 +307,7 @@ async function estimateFoodNutrition(foodDescription, userApiKey = '') {
   // 调用 AI
   const answer = await callChatApi({
     messages: [
-      { role: 'system', content: '你是一个专业的营养师。根据用户描述的食物，估算其营养成分。请只返回JSON格式，不要有任何其他文字。格式：{"calories":整数千卡,"protein":克,"carbs":克,"fat":克,"micros":{"vitaminA":ug,"vitaminD":ug,"vitaminE":mg,"vitaminK":ug,"vitaminB1":mg,"vitaminB2":mg,"vitaminB3":mg,"vitaminB6":mg,"folate":ug,"vitaminB12":ug,"vitaminC":mg,"calcium":mg,"iron":mg,"magnesium":mg,"zinc":mg,"selenium":ug,"potassium":mg,"iodine":ug,"lutein":mg,"omega3":mg}}' },
+      { role: 'system', content: buildFoodEstimatePrompt() },
       { role: 'user', content: foodDescription },
     ],
     temperature: 0.3,
